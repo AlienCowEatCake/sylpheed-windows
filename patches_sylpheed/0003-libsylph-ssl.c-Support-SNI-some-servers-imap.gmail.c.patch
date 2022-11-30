@@ -1,0 +1,28 @@
+From 22065d7558b7fb0d85877b00a496946d9ec864b2 Mon Sep 17 00:00:00 2001
+From: Antonio Ospite <ao2@ao2.it>
+Date: Fri, 24 Aug 2018 10:46:04 +0200
+Subject: [PATCH 03/10] libsylph/ssl.c: Support SNI, some servers
+ (imap.gmail.com) seem to require it
+
+---
+ libsylph/ssl.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
+
+diff --git a/libsylph/ssl.c b/libsylph/ssl.c
+index 8413925..264d66e 100644
+--- a/libsylph/ssl.c
++++ b/libsylph/ssl.c
+@@ -258,6 +258,10 @@ gboolean ssl_init_socket_with_method(SockInfo *sockinfo, SSLMethod method)
+ 		return FALSE;
+ 	}
+ 
++#ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
++	SSL_set_tlsext_host_name(sockinfo->ssl, sockinfo->hostname);
++#endif
++
+ 	SSL_set_fd(sockinfo->ssl, sockinfo->sock);
+ 	while ((ret = SSL_connect(sockinfo->ssl)) != 1) {
+ 		err = SSL_get_error(sockinfo->ssl, ret);
+-- 
+1.7.9
+

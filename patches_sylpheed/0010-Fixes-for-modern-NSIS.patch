@@ -1,0 +1,460 @@
+From 77d233a2f2c23d56d91d880df420bb6f87adfcf1 Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Wed, 30 Nov 2022 23:25:30 +0700
+Subject: [PATCH 10/10] Fixes for modern NSIS
+
+---
+ nsis/japanese.nsh             |  122 ++++++++++++++++++++--------------------
+ nsis/plugin-updater.nsi       |    4 +-
+ nsis/spanish.nsh              |   16 +++---
+ nsis/sylpheed-defs.nsh        |    2 +-
+ nsis/sylpheed-un_sylpheed.nsh |   50 +++++++++++++++++
+ nsis/sylpheed.nsi             |   72 +++++++-----------------
+ nsis/update-manager.nsi       |    2 +
+ 7 files changed, 145 insertions(+), 123 deletions(-)
+ create mode 100644 nsis/sylpheed-un_sylpheed.nsh
+
+diff --git a/nsis/japanese.nsh b/nsis/japanese.nsh
+index a93b604..c94c9cc 100644
+--- a/nsis/japanese.nsh
++++ b/nsis/japanese.nsh
+@@ -1,71 +1,71 @@
+ LicenseLangString license ${LANG_JAPANESE} "COPYING.ja.txt"
+-LangString readme  ${LANG_JAPANESE} "READMEÇï\é¶"
+-LangString jump  ${LANG_JAPANESE} "${INST_NAME}ÇÃWebÉTÉCÉgÇï\é¶Ç∑ÇÈ"
+-LangString plugins ${LANG_JAPANESE} "Sylpheed ÉvÉâÉOÉCÉì"
++LangString readme  ${LANG_JAPANESE} "README„ÇíË°®Á§∫"
++LangString jump  ${LANG_JAPANESE} "${INST_NAME}„ÅÆWeb„Çµ„Ç§„Éà„ÇíË°®Á§∫„Åô„Çã"
++LangString plugins ${LANG_JAPANESE} "Sylpheed „Éó„É©„Ç∞„Ç§„É≥"
+ LangString attachment_tool_plugin ${LANG_JAPANESE} "attachment_tool"
+-LangString autoenc_plugin ${LANG_JAPANESE} "autoencÉvÉâÉOÉCÉì"
+-LangString desktop_shortcut ${LANG_JAPANESE} "ÉfÉXÉNÉgÉbÉvÇÃÉVÉáÅ[ÉgÉJÉbÉg"
+-LangString quick_shortcut ${LANG_JAPANESE} "ÉNÉCÉbÉNãNìÆÇÃÉVÉáÅ[ÉgÉJÉbÉg"
+-LangString handler ${LANG_JAPANESE} "ä÷òAïtÇØÇÃìoò^"
+-LangString sylpheed_description ${LANG_JAPANESE} "Sylpheedñ{ëÃÇ≈Ç∑"
+-LangString plugins_description ${LANG_JAPANESE} "SylpheedópÇÃÉvÉâÉOÉCÉì"
+-LangString sylpheed_pro_description ${LANG_JAPANESE} "Sylpheed Pro ëSï∂åüçıÉvÉâÉOÉCÉì"
+-LangString attachment_tool_plugin_description ${LANG_JAPANESE} "attachment_tool ÉvÉâÉOÉCÉì"
+-LangString autoenc_plugin_description ${LANG_JAPANESE} "ìYïtÉtÉ@ÉCÉãé©ìÆà√çÜâªÉvÉâÉOÉCÉì"
+-LangString sylfilter_description ${LANG_JAPANESE} "SylFilter ñ¿òfÉÅÅ[ÉãÉtÉBÉãÉ^"
+-LangString bsfilter_description ${LANG_JAPANESE} "bsfilter ñ¿òfÉÅÅ[ÉãÉtÉBÉãÉ^"
+-LangString desktop_shortcut_description ${LANG_JAPANESE} "ÉfÉXÉNÉgÉbÉvÇ…ÉVÉáÅ[ÉgÉJÉbÉgÇçÏê¨ÇµÇ‹Ç∑(åªç›ÇÃÉÜÅ[ÉUÇÃÇ›)"
+-LangString quick_shortcut_description ${LANG_JAPANESE} "ÉNÉCÉbÉNãNìÆÇ…ÉVÉáÅ[ÉgÉJÉbÉgÇçÏê¨ÇµÇ‹Ç∑(åªç›ÇÃÉÜÅ[ÉUÇÃÇ›)"
+-LangString handler_description ${LANG_JAPANESE} "WebÉuÉâÉEÉUÇ»Ç«Ç≈ mailto: ÇÃÉäÉìÉNÇÉNÉäÉbÉNÇµÇΩèÍçáÅA\
+-Ç‹ÇΩemlÉtÉ@ÉCÉãÇäJÇ¢ÇΩèÍçáÅASylpheedÇãNìÆÇ∑ÇÈÇÊÇ§Ç…ê›íËÇµÇ‹Ç∑"
+-LangString un_sylpheed_description ${LANG_JAPANESE} "Sylpheedñ{ëÃÇ≈Ç∑"
+-LangString un_plugins_description ${LANG_JAPANESE} "SylpheedópÇÃÉvÉâÉOÉCÉì"
+-LangString un_sylpheed_pro_description ${LANG_JAPANESE} "Sylpheed Pro ëSï∂åüçıÉvÉâÉOÉCÉì"
+-LangString un_attachment_tool_plugin_description ${LANG_JAPANESE} "attachment_tool ÉvÉâÉOÉCÉì"
+-LangString un_autoenc_plugin_description ${LANG_JAPANESE} "ìYïtÉtÉ@ÉCÉãé©ìÆà√çÜâªÉvÉâÉOÉCÉì"
+-LangString un_sylfilter_description ${LANG_JAPANESE} "SylFilter ñ¿òfÉÅÅ[ÉãÉtÉBÉãÉ^"
+-LangString un_bsfilter_description ${LANG_JAPANESE} "bsfilter ñ¿òfÉÅÅ[ÉãÉtÉBÉãÉ^"
+-LangString un_desktop_shortcut_description ${LANG_JAPANESE} "ÉfÉXÉNÉgÉbÉvÇÃÉVÉáÅ[ÉgÉJÉbÉgÇçÌèúÇµÇ‹Ç∑(åªç›ÇÃÉÜÅ[ÉUÇÃÇ›)"
+-LangString un_quick_shortcut_description ${LANG_JAPANESE} "ÉNÉCÉbÉNãNìÆÇÃÉVÉáÅ[ÉgÉJÉbÉgÇçÌèúÇµÇ‹Ç∑(åªç›ÇÃÉÜÅ[ÉUÇÃÇ›)"
+-LangString delete_caution ${LANG_JAPANESE} "${PRODUCT_NAME} Ç™Ç∑Ç≈Ç…ÉCÉìÉXÉgÅ[ÉãÇ≥ÇÍÇƒÇ¢Ç‹Ç∑ÅB$\n$\nOK ÇÉNÉäÉbÉNÇ∑ÇÈÇ∆\
+-ÉCÉìÉXÉgÅ[ÉãÇ≥ÇÍÇƒÇ¢ÇÈÉoÅ[ÉWÉáÉìÇçÌèúÇµÅA ÉLÉÉÉìÉZÉã ÇÉNÉäÉbÉNÇ∑ÇÈÇ∆ÉCÉìÉXÉgÅ[ÉãÇíÜé~ÇµÇ‹Ç∑ÅB"
+-LangString app_running ${LANG_JAPANESE} "${PRODUCT_NAME} Ç™ãNìÆíÜÇ≈Ç∑ÅBÉCÉìÉXÉgÅ[ÉãÇÃëOÇ… ${PRODUCT_NAME} ÇèIóπÇµÇƒÇ≠ÇæÇ≥Ç¢ÅB"
+-LangString app_running_uninst ${LANG_JAPANESE} "${PRODUCT_NAME} Ç™ãNìÆíÜÇ≈Ç∑ÅBÉAÉìÉCÉìÉXÉgÅ[ÉãÇÃëOÇ… ${PRODUCT_NAME} ÇèIóπÇµÇƒÇ≠ÇæÇ≥Ç¢ÅB"
++LangString autoenc_plugin ${LANG_JAPANESE} "autoenc„Éó„É©„Ç∞„Ç§„É≥"
++LangString desktop_shortcut ${LANG_JAPANESE} "„Éá„Çπ„ÇØ„Éà„ÉÉ„Éó„ÅÆ„Ç∑„Éß„Éº„Éà„Ç´„ÉÉ„Éà"
++LangString quick_shortcut ${LANG_JAPANESE} "„ÇØ„Ç§„ÉÉ„ÇØËµ∑Âãï„ÅÆ„Ç∑„Éß„Éº„Éà„Ç´„ÉÉ„Éà"
++LangString handler ${LANG_JAPANESE} "Èñ¢ÈÄ£‰ªò„Åë„ÅÆÁôªÈå≤"
++LangString sylpheed_description ${LANG_JAPANESE} "SylpheedÊú¨‰Ωì„Åß„Åô"
++LangString plugins_description ${LANG_JAPANESE} "SylpheedÁî®„ÅÆ„Éó„É©„Ç∞„Ç§„É≥"
++LangString sylpheed_pro_description ${LANG_JAPANESE} "Sylpheed Pro ÂÖ®ÊñáÊ§úÁ¥¢„Éó„É©„Ç∞„Ç§„É≥"
++LangString attachment_tool_plugin_description ${LANG_JAPANESE} "attachment_tool „Éó„É©„Ç∞„Ç§„É≥"
++LangString autoenc_plugin_description ${LANG_JAPANESE} "Ê∑ª‰ªò„Éï„Ç°„Ç§„É´Ëá™ÂãïÊöóÂè∑Âåñ„Éó„É©„Ç∞„Ç§„É≥"
++LangString sylfilter_description ${LANG_JAPANESE} "SylFilter Ëø∑ÊÉë„É°„Éº„É´„Éï„Ç£„É´„Çø"
++LangString bsfilter_description ${LANG_JAPANESE} "bsfilter Ëø∑ÊÉë„É°„Éº„É´„Éï„Ç£„É´„Çø"
++LangString desktop_shortcut_description ${LANG_JAPANESE} "„Éá„Çπ„ÇØ„Éà„ÉÉ„Éó„Å´„Ç∑„Éß„Éº„Éà„Ç´„ÉÉ„Éà„Çí‰ΩúÊàê„Åó„Åæ„Åô(ÁèæÂú®„ÅÆ„É¶„Éº„Ç∂„ÅÆ„Åø)"
++LangString quick_shortcut_description ${LANG_JAPANESE} "„ÇØ„Ç§„ÉÉ„ÇØËµ∑Âãï„Å´„Ç∑„Éß„Éº„Éà„Ç´„ÉÉ„Éà„Çí‰ΩúÊàê„Åó„Åæ„Åô(ÁèæÂú®„ÅÆ„É¶„Éº„Ç∂„ÅÆ„Åø)"
++LangString handler_description ${LANG_JAPANESE} "Web„Éñ„É©„Ç¶„Ç∂„Å™„Å©„Åß mailto: „ÅÆ„É™„É≥„ÇØ„Çí„ÇØ„É™„ÉÉ„ÇØ„Åó„ÅüÂ†¥Âêà„ÄÅ\
++„Åæ„Åüeml„Éï„Ç°„Ç§„É´„ÇíÈñã„ÅÑ„ÅüÂ†¥Âêà„ÄÅSylpheed„ÇíËµ∑Âãï„Åô„Çã„Çà„ÅÜ„Å´Ë®≠ÂÆö„Åó„Åæ„Åô"
++LangString un_sylpheed_description ${LANG_JAPANESE} "SylpheedÊú¨‰Ωì„Åß„Åô"
++LangString un_plugins_description ${LANG_JAPANESE} "SylpheedÁî®„ÅÆ„Éó„É©„Ç∞„Ç§„É≥"
++LangString un_sylpheed_pro_description ${LANG_JAPANESE} "Sylpheed Pro ÂÖ®ÊñáÊ§úÁ¥¢„Éó„É©„Ç∞„Ç§„É≥"
++LangString un_attachment_tool_plugin_description ${LANG_JAPANESE} "attachment_tool „Éó„É©„Ç∞„Ç§„É≥"
++LangString un_autoenc_plugin_description ${LANG_JAPANESE} "Ê∑ª‰ªò„Éï„Ç°„Ç§„É´Ëá™ÂãïÊöóÂè∑Âåñ„Éó„É©„Ç∞„Ç§„É≥"
++LangString un_sylfilter_description ${LANG_JAPANESE} "SylFilter Ëø∑ÊÉë„É°„Éº„É´„Éï„Ç£„É´„Çø"
++LangString un_bsfilter_description ${LANG_JAPANESE} "bsfilter Ëø∑ÊÉë„É°„Éº„É´„Éï„Ç£„É´„Çø"
++LangString un_desktop_shortcut_description ${LANG_JAPANESE} "„Éá„Çπ„ÇØ„Éà„ÉÉ„Éó„ÅÆ„Ç∑„Éß„Éº„Éà„Ç´„ÉÉ„Éà„ÇíÂâäÈô§„Åó„Åæ„Åô(ÁèæÂú®„ÅÆ„É¶„Éº„Ç∂„ÅÆ„Åø)"
++LangString un_quick_shortcut_description ${LANG_JAPANESE} "„ÇØ„Ç§„ÉÉ„ÇØËµ∑Âãï„ÅÆ„Ç∑„Éß„Éº„Éà„Ç´„ÉÉ„Éà„ÇíÂâäÈô§„Åó„Åæ„Åô(ÁèæÂú®„ÅÆ„É¶„Éº„Ç∂„ÅÆ„Åø)"
++LangString delete_caution ${LANG_JAPANESE} "${PRODUCT_NAME} „Åå„Åô„Åß„Å´„Ç§„É≥„Çπ„Éà„Éº„É´„Åï„Çå„Å¶„ÅÑ„Åæ„Åô„ÄÇ$\n$\nOK „Çí„ÇØ„É™„ÉÉ„ÇØ„Åô„Çã„Å®\
++„Ç§„É≥„Çπ„Éà„Éº„É´„Åï„Çå„Å¶„ÅÑ„Çã„Éê„Éº„Ç∏„Éß„É≥„ÇíÂâäÈô§„Åó„ÄÅ „Ç≠„É£„É≥„Çª„É´ „Çí„ÇØ„É™„ÉÉ„ÇØ„Åô„Çã„Å®„Ç§„É≥„Çπ„Éà„Éº„É´„Çí‰∏≠Ê≠¢„Åó„Åæ„Åô„ÄÇ"
++LangString app_running ${LANG_JAPANESE} "${PRODUCT_NAME} „ÅåËµ∑Âãï‰∏≠„Åß„Åô„ÄÇ„Ç§„É≥„Çπ„Éà„Éº„É´„ÅÆÂâç„Å´ ${PRODUCT_NAME} „ÇíÁµÇ‰∫Ü„Åó„Å¶„Åè„Å†„Åï„ÅÑ„ÄÇ"
++LangString app_running_uninst ${LANG_JAPANESE} "${PRODUCT_NAME} „ÅåËµ∑Âãï‰∏≠„Åß„Åô„ÄÇ„Ç¢„É≥„Ç§„É≥„Çπ„Éà„Éº„É´„ÅÆÂâç„Å´ ${PRODUCT_NAME} „ÇíÁµÇ‰∫Ü„Åó„Å¶„Åè„Å†„Åï„ÅÑ„ÄÇ"
+ 
+-LangString sylpheed_manual_lnk ${LANG_JAPANESE} "Sylpheed É}ÉjÉÖÉAÉã"
+-LangString sylpheed_debug_mode_lnk ${LANG_JAPANESE} "Sylpheed (ÉfÉoÉbÉOÉÇÅ[Éh)"
+-LangString sylpheed_safe_mode_lnk ${LANG_JAPANESE} "Sylpheed (ÉZÅ[ÉtÉÇÅ[Éh)"
+-LangString sylpheed_all_quit_lnk ${LANG_JAPANESE} "Sylpheed ëSèIóπ"
+-LangString sylpheed_homepage_lnk ${LANG_JAPANESE} "Sylpheed ÉzÅ[ÉÄÉyÅ[ÉW"
+-LangString uninstall_lnk ${LANG_JAPANESE} "ÉAÉìÉCÉìÉXÉgÅ[Éã"
++LangString sylpheed_manual_lnk ${LANG_JAPANESE} "Sylpheed „Éû„Éã„É•„Ç¢„É´"
++LangString sylpheed_debug_mode_lnk ${LANG_JAPANESE} "Sylpheed („Éá„Éê„ÉÉ„Ç∞„É¢„Éº„Éâ)"
++LangString sylpheed_safe_mode_lnk ${LANG_JAPANESE} "Sylpheed („Çª„Éº„Éï„É¢„Éº„Éâ)"
++LangString sylpheed_all_quit_lnk ${LANG_JAPANESE} "Sylpheed ÂÖ®ÁµÇ‰∫Ü"
++LangString sylpheed_homepage_lnk ${LANG_JAPANESE} "Sylpheed „Éõ„Éº„É†„Éö„Éº„Ç∏"
++LangString uninstall_lnk ${LANG_JAPANESE} "„Ç¢„É≥„Ç§„É≥„Çπ„Éà„Éº„É´"
+ 
+-LangString downloading  ${LANG_JAPANESE}  "%sÇÉ_ÉEÉìÉçÅ[ÉhíÜ"
+-LangString connecting  ${LANG_JAPANESE}  "ê⁄ë±íÜ ..."
+-LangString second  ${LANG_JAPANESE}  " (écÇË 1 ïb)"
+-LangString minute  ${LANG_JAPANESE}  " (écÇË 1 ï™)"
+-LangString hour  ${LANG_JAPANESE}  " (écÇË 1 éûä‘)"
+-LangString seconds  ${LANG_JAPANESE}  " (écÇË %u ïb)"
+-LangString minutes  ${LANG_JAPANESE}  " (écÇË %u ï™)"
+-LangString hours  ${LANG_JAPANESE}  " (écÇË %u éûä‘)"
++LangString downloading  ${LANG_JAPANESE}  "%s„Çí„ÉÄ„Ç¶„É≥„É≠„Éº„Éâ‰∏≠"
++LangString connecting  ${LANG_JAPANESE}  "Êé•Á∂ö‰∏≠ ..."
++LangString second  ${LANG_JAPANESE}  " (ÊÆã„Çä 1 Áßí)"
++LangString minute  ${LANG_JAPANESE}  " (ÊÆã„Çä 1 ÂàÜ)"
++LangString hour  ${LANG_JAPANESE}  " (ÊÆã„Çä 1 ÊôÇÈñì)"
++LangString seconds  ${LANG_JAPANESE}  " (ÊÆã„Çä %u Áßí)"
++LangString minutes  ${LANG_JAPANESE}  " (ÊÆã„Çä %u ÂàÜ)"
++LangString hours  ${LANG_JAPANESE}  " (ÊÆã„Çä %u ÊôÇÈñì)"
+ LangString progress  ${LANG_JAPANESE}  "%skB (%d%%) of %skB @ %u.%01ukB/s"
+-LangString download_failed  ${LANG_JAPANESE}  "É_ÉEÉìÉçÅ[Éhé∏îs:"
+-LangString update_confirm  ${LANG_JAPANESE}  "$(^NameDA)ÇÉAÉbÉvÉfÅ[ÉgÇµÇ‹Ç∑Ç©?"
+-LangString kill_and_update_confirm  ${LANG_JAPANESE}  "SylpheedÇèIóπÇµÇƒÅA$(^NameDA)ÇÉAÉbÉvÉfÅ[ÉgÇµÇ‹Ç∑Ç©?"
+-LangString un_confirmpage_text_top   ${LANG_JAPANESE}  "$(^NameDA)ÇÕÅAà»â∫ÇÃÉtÉHÉãÉ_Ç©ÇÁÉAÉìÉCÉìÉXÉgÅ[ÉãÇ≥ÇÍÇ‹Ç∑ÅB$_CLICK$\r$\nÅ¶ $APPDATA\${PRODUCT_NAME} Ç…Ç†ÇÈÉÜÅ[ÉUÇÃÉfÅ[É^ÇÕçÌèúÇ≥ÇÍÇ‹ÇπÇÒÅB"
+-LangString MUI_UNTEXT_FINISH_INFO_TEXT  ${LANG_JAPANESE}  "$(^NameDA)ÇÕÅAÇ±ÇÃÉRÉìÉsÉÖÅ[É^Ç©ÇÁÉAÉìÉCÉìÉXÉgÅ[ÉãÇ≥ÇÍÇ‹ÇµÇΩÅB$\r$\n$\r$\nÉEÉBÉUÅ[ÉhÇï¬Ç∂ÇÈÇ…ÇÕ [äÆóπ] ÇâüÇµÇƒÇ≠ÇæÇ≥Ç¢ÅB"
++LangString download_failed  ${LANG_JAPANESE}  "„ÉÄ„Ç¶„É≥„É≠„Éº„ÉâÂ§±Êïó:"
++LangString update_confirm  ${LANG_JAPANESE}  "$(^NameDA)„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà„Åó„Åæ„Åô„Åã?"
++LangString kill_and_update_confirm  ${LANG_JAPANESE}  "Sylpheed„ÇíÁµÇ‰∫Ü„Åó„Å¶„ÄÅ$(^NameDA)„Çí„Ç¢„ÉÉ„Éó„Éá„Éº„Éà„Åó„Åæ„Åô„Åã?"
++LangString un_confirmpage_text_top   ${LANG_JAPANESE}  "$(^NameDA)„ÅØ„ÄÅ‰ª•‰∏ã„ÅÆ„Éï„Ç©„É´„ÉÄ„Åã„Çâ„Ç¢„É≥„Ç§„É≥„Çπ„Éà„Éº„É´„Åï„Çå„Åæ„Åô„ÄÇ$_CLICK$\r$\n‚Äª $APPDATA\${PRODUCT_NAME} „Å´„ÅÇ„Çã„É¶„Éº„Ç∂„ÅÆ„Éá„Éº„Çø„ÅØÂâäÈô§„Åï„Çå„Åæ„Åõ„Çì„ÄÇ"
++LangString MUI_UNTEXT_FINISH_INFO_TEXT  ${LANG_JAPANESE}  "$(^NameDA)„ÅØ„ÄÅ„Åì„ÅÆ„Ç≥„É≥„Éî„É•„Éº„Çø„Åã„Çâ„Ç¢„É≥„Ç§„É≥„Çπ„Éà„Éº„É´„Åï„Çå„Åæ„Åó„Åü„ÄÇ$\r$\n$\r$\n„Ç¶„Ç£„Ç∂„Éº„Éâ„ÇíÈñâ„Åò„Çã„Å´„ÅØ [ÂÆå‰∫Ü] „ÇíÊäº„Åó„Å¶„Åè„Å†„Åï„ÅÑ„ÄÇ"
+ ;--------------------------------
+ ; Localized strings for use with nsisunz
+ ; The '%f' in the string is replaced with the filename on run-time.
+ ; "%c" and "%u" is replaced with compressed size and uncompressed size
+ ; respectively.
+-LangString plugin_updater_nsisunz_text ${LANG_JAPANESE} "ìWäJ: %f (%c -> %u)"
+-LangString plugin_updater_completed_text ${LANG_JAPANESE} "ÉvÉâÉOÉCÉìÇÃÉAÉbÉvÉfÅ[ÉgÇ™äÆóπÇµÇ‹ÇµÇΩÅB"
+-LangString plugin_updater_header ${LANG_JAPANESE} "ÉvÉâÉOÉCÉìÉAÉbÉvÉfÅ[É^Å["
+-LangString plugin_updater_header_description ${LANG_JAPANESE} "çXêVÇ∑ÇÈÉvÉâÉOÉCÉìÇëIëÇµÇƒÇ≠ÇæÇ≥Ç¢"
+-LangString plugin_updater_must_select ${LANG_JAPANESE} "è≠Ç»Ç≠Ç∆Ç‡1å¬ÉvÉâÉOÉCÉìÇëIëÇµÇƒÇ≠ÇæÇ≥Ç¢ÅB"
+-LangString plugin_updater_extracting ${LANG_JAPANESE} "ìWäJíÜ"
+-LangString plugin_updater_extracting_files ${LANG_JAPANESE} "ÉtÉ@ÉCÉãÇìWäJíÜ"
+-LangString plugin_updater_extracted ${LANG_JAPANESE} "ìWäJäÆóπ"
+-LangString plugin_updater_extracted_description ${LANG_JAPANESE} "ÉtÉ@ÉCÉãÇìWäJÇµÇ‹ÇµÇΩÅB"
+-LangString plugin_updater_extraction_aborted ${LANG_JAPANESE} "ìWäJíÜé~"
+-LangString plugin_updater_extraction_aborted_description ${LANG_JAPANESE} "ìWäJèàóùÇíÜé~ÇµÇ‹ÇµÇΩÅB"
++LangString plugin_updater_nsisunz_text ${LANG_JAPANESE} "Â±ïÈñã: %f (%c -> %u)"
++LangString plugin_updater_completed_text ${LANG_JAPANESE} "„Éó„É©„Ç∞„Ç§„É≥„ÅÆ„Ç¢„ÉÉ„Éó„Éá„Éº„Éà„ÅåÂÆå‰∫Ü„Åó„Åæ„Åó„Åü„ÄÇ"
++LangString plugin_updater_header ${LANG_JAPANESE} "„Éó„É©„Ç∞„Ç§„É≥„Ç¢„ÉÉ„Éó„Éá„Éº„Çø„Éº"
++LangString plugin_updater_header_description ${LANG_JAPANESE} "Êõ¥Êñ∞„Åô„Çã„Éó„É©„Ç∞„Ç§„É≥„ÇíÈÅ∏Êäû„Åó„Å¶„Åè„Å†„Åï„ÅÑ"
++LangString plugin_updater_must_select ${LANG_JAPANESE} "Â∞ë„Å™„Åè„Å®„ÇÇ1ÂÄã„Éó„É©„Ç∞„Ç§„É≥„ÇíÈÅ∏Êäû„Åó„Å¶„Åè„Å†„Åï„ÅÑ„ÄÇ"
++LangString plugin_updater_extracting ${LANG_JAPANESE} "Â±ïÈñã‰∏≠"
++LangString plugin_updater_extracting_files ${LANG_JAPANESE} "„Éï„Ç°„Ç§„É´„ÇíÂ±ïÈñã‰∏≠"
++LangString plugin_updater_extracted ${LANG_JAPANESE} "Â±ïÈñãÂÆå‰∫Ü"
++LangString plugin_updater_extracted_description ${LANG_JAPANESE} "„Éï„Ç°„Ç§„É´„ÇíÂ±ïÈñã„Åó„Åæ„Åó„Åü„ÄÇ"
++LangString plugin_updater_extraction_aborted ${LANG_JAPANESE} "Â±ïÈñã‰∏≠Ê≠¢"
++LangString plugin_updater_extraction_aborted_description ${LANG_JAPANESE} "Â±ïÈñãÂá¶ÁêÜ„Çí‰∏≠Ê≠¢„Åó„Åæ„Åó„Åü„ÄÇ"
+diff --git a/nsis/plugin-updater.nsi b/nsis/plugin-updater.nsi
+index efb4b15..de8cf5d 100644
+--- a/nsis/plugin-updater.nsi
++++ b/nsis/plugin-updater.nsi
+@@ -7,6 +7,8 @@
+ 
+ !include "sylpheed-defs.nsh"
+ 
++Unicode True
++
+ SetCompressor /SOLID lzma
+ 
+ ;--------------------------------
+@@ -44,7 +46,7 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
+ ;Only useful for BZIP2 compression
+ ;Use ReserveFile for your own InstallOptions INI files too!
+ 
+-ReserveFile "${NSISDIR}\Plugins\InstallOptions.dll"
++ReserveFile /plugin "InstallOptions.dll"
+ 
+ RequestExecutionLevel admin
+ XPStyle on
+diff --git a/nsis/spanish.nsh b/nsis/spanish.nsh
+index 9a1b6af..00e538b 100644
+--- a/nsis/spanish.nsh
++++ b/nsis/spanish.nsh
+@@ -1,11 +1,11 @@
+ LicenseLangString license ${LANG_SPANISH} "COPYING.txt"
+ LangString readme  ${LANG_SPANISH}  "Ver README"
+-LangString jump  ${LANG_SPANISH}  "Ver la p·gina web de ${INST_NAME}"
++LangString jump  ${LANG_SPANISH}  "Ver la p√°gina web de ${INST_NAME}"
+ LangString plugins ${LANG_SPANISH} "Sylpheed Plug-ins"
+ LangString attachment_tool_plugin ${LANG_SPANISH} "attachment_tool"
+ LangString autoenc_plugin ${LANG_SPANISH} "autoenc plugin"
+ LangString desktop_shortcut ${LANG_SPANISH} "Acceso directo en el escritorio"
+-LangString quick_shortcut ${LANG_SPANISH} "Acceso directo en la barra r·pida"
++LangString quick_shortcut ${LANG_SPANISH} "Acceso directo en la barra r√°pida"
+ LangString handler ${LANG_SPANISH} "Mantener asociado al protocolo mailto:"
+ LangString sylpheed_description ${LANG_SPANISH} "el propio Sylpheed"
+ LangString plugins_description ${LANG_SPANISH} "Plug-ins for Sylpheed"
+@@ -14,9 +14,9 @@ LangString attachment_tool_plugin_description ${LANG_SPANISH} "attachment_tool P
+ LangString autoenc_plugin_description ${LANG_SPANISH} "autoenc Plug-in"
+ LangString sylfilter_description ${LANG_SPANISH} "SylFilter bayesian spam filter"
+ LangString bsfilter_description ${LANG_SPANISH} "bsfilter bayesian spam filter"
+-LangString desktop_shortcut_description ${LANG_SPANISH} "Se realizÛ el acceso directo al escritorio."
+-LangString quick_shortcut_description ${LANG_SPANISH} "Se realizÛ el acceso directo a la barra r·pida. "
+-LangString handler_description ${LANG_SPANISH} "Se iniciar· Sylpheed cuando se haga clic en \
++LangString desktop_shortcut_description ${LANG_SPANISH} "Se realiz√≥ el acceso directo al escritorio."
++LangString quick_shortcut_description ${LANG_SPANISH} "Se realiz√≥ el acceso directo a la barra r√°pida. "
++LangString handler_description ${LANG_SPANISH} "Se iniciar√° Sylpheed cuando se haga clic en \
+   los enlaces mailto: del navegador web y similares."
+ LangString un_sylpheed_description ${LANG_SPANISH} "el propio Sylpheed"
+ LangString un_plugins_description ${LANG_SPANISH} "Plug-ins for Sylpheed"
+@@ -27,9 +27,9 @@ LangString un_sylfilter_description ${LANG_SPANISH} "SylFilter bayesian spam fil
+ LangString un_bsfilter_description ${LANG_SPANISH} "bsfilter bayesian spam filter"
+ LangString un_desktop_shortcut_description ${LANG_SPANISH} "Delete shortcut for Desktop (current user only)"
+ LangString un_quick_shortcut_description ${LANG_SPANISH} "Delete shortcut for Quick Launch (current user only)"
+-LangString delete_caution ${LANG_SPANISH} "${PRODUCT_NAME} ya est· instalado. $\n$\nPulse ´Aceptarª para \
+-  eliminar la versiÛn anterior o ´Cancelarª para cancelar la actualizaciÛn. $\n$\n\
+-  Tenga en cuenta que todos los ficheros existentes en $INSTDIR ser·n eliminados. "
++LangString delete_caution ${LANG_SPANISH} "${PRODUCT_NAME} ya est√° instalado. $\n$\nPulse ¬´Aceptar¬ª para \
++  eliminar la versi√≥n anterior o ¬´Cancelar¬ª para cancelar la actualizaci√≥n. $\n$\n\
++  Tenga en cuenta que todos los ficheros existentes en $INSTDIR ser√°n eliminados. "
+ LangString app_running ${LANG_SPANISH} "Sylpheed is running. Please quit Sylpheed before installing."
+ LangString app_running_uninst ${LANG_SPANISH} "Sylpheed is running. Please quit Sylpheed before uninstalling."
+ 
+diff --git a/nsis/sylpheed-defs.nsh b/nsis/sylpheed-defs.nsh
+index 2e0aea0..628e70d 100644
+--- a/nsis/sylpheed-defs.nsh
++++ b/nsis/sylpheed-defs.nsh
+@@ -2,7 +2,7 @@
+ ;!define HAVE_AUTOENC_PLUGIN
+ 
+ !define PRODUCT_NAME "Sylpheed"
+-!define PRODUCT_VERSION "3.7"
++!define PRODUCT_VERSION "3.8beta1"
+ 
+ !ifdef SYLPHEED_PRO
+ !define PRODUCT_PUBLISHER "SRA OSS, Inc. Japan"
+diff --git a/nsis/sylpheed-un_sylpheed.nsh b/nsis/sylpheed-un_sylpheed.nsh
+new file mode 100644
+index 0000000..42db688
+--- /dev/null
++++ b/nsis/sylpheed-un_sylpheed.nsh
+@@ -0,0 +1,50 @@
++  Delete "$INSTDIR\curl.exe"
++  Delete "$INSTDIR\gpgme-w32spawn.exe"
++  Delete "$INSTDIR\gspawn-win32-helper-console.exe"
++  Delete "$INSTDIR\gspawn-win32-helper.exe"
++  Delete "$INSTDIR\iconv.dll"
++  Delete "$INSTDIR\intl.dll"
++  Delete "$INSTDIR\jpeg62.dll"
++  Delete "$INSTDIR\libasprintf-0.dll"
++  Delete "$INSTDIR\libassuan-0.dll"
++  Delete "$INSTDIR\libatk-1.0-0.dll"
++  Delete "$INSTDIR\libcairo-2.dll"
++  Delete "$INSTDIR\libcompface.dll"
++  Delete "$INSTDIR\libeay32.dll"
++  Delete "$INSTDIR\libffi-6.dll"
++  Delete "$INSTDIR\libgdk-win32-2.0-0.dll"
++  Delete "$INSTDIR\libgdk_pixbuf-2.0-0.dll"
++  Delete "$INSTDIR\libgio-2.0-0.dll"
++  Delete "$INSTDIR\libglib-2.0-0.dll"
++  Delete "$INSTDIR\libgmodule-2.0-0.dll"
++  Delete "$INSTDIR\libgobject-2.0-0.dll"
++  Delete "$INSTDIR\libgpg-error-0.dll"
++  Delete "$INSTDIR\libgpgme-11.dll"
++  Delete "$INSTDIR\libgthread-2.0-0.dll"
++  Delete "$INSTDIR\libgtk-win32-2.0-0.dll"
++  Delete "$INSTDIR\libonig.dll"
++  Delete "$INSTDIR\libpango-1.0-0.dll"
++  Delete "$INSTDIR\libpangocairo-1.0-0.dll"
++  Delete "$INSTDIR\libpangowin32-1.0-0.dll"
++  Delete "$INSTDIR\libpng14-14.dll"
++  Delete "$INSTDIR\libsylph-0-1.dll"
++  Delete "$INSTDIR\libsylpheed-plugin-0-1.dll"
++  Delete "$INSTDIR\ssleay32.dll"
++  Delete "$INSTDIR\sylpheed.exe"
++  Delete "$INSTDIR\wabread.exe"
++  Delete "$INSTDIR\zlib1.dll"
++
++  Delete "$INSTDIR\README-win32-es.txt"
++  Delete "$INSTDIR\README-win32-ja.txt"
++  Delete "$INSTDIR\README-win32.txt"
++
++  Delete "$INSTDIR\sample-sylpheed.ini"
++
++  Delete "$INSTDIR\sylpheed-128x128.png"
++  Delete "$INSTDIR\sylpheed-64x64.png"
++  Delete "$INSTDIR\sylpheed-mailto-protocol_admin.reg"
++  Delete "$INSTDIR\sylpheed-mailto-protocol_user.reg"
++  Delete "$INSTDIR\sylpheed.png"
++
++  Delete "$INSTDIR\plugin-updater.exe"
++  Delete "$INSTDIR\update-manager.exe"
+diff --git a/nsis/sylpheed.nsi b/nsis/sylpheed.nsi
+index 86ae32a..9cc15be 100644
+--- a/nsis/sylpheed.nsi
++++ b/nsis/sylpheed.nsi
+@@ -7,6 +7,8 @@
+ 
+ !include "sylpheed-defs.nsh"
+ 
++Unicode True
++
+ SetCompressor /SOLID lzma
+ 
+ !include "nsProcess.nsh"
+@@ -60,7 +62,7 @@ SetCompressor /SOLID lzma
+ 
+ ; Reserve files
+ !insertmacro MUI_RESERVEFILE_INSTALLOPTIONS
+-ReserveFile "${NSISDIR}\Plugins\nsProcess.dll"
++ReserveFile /plugin "nsProcess.dll"
+ 
+ ; MUI end ------
+ 
+@@ -74,7 +76,11 @@ Var ISSILENT
+ ;OutFile "${PRODUCT_NAME}-${PRODUCT_VERSION}_setup.exe"
+ Name "${INST_NAME} ${INST_VERSION}"
+ OutFile "${INST_FILENAME}-${INST_VERSION}_setup.exe"
+-InstallDir "$PROGRAMFILES\${PRODUCT_NAME}"
++!ifdef ARCH_x64
++  InstallDir "$PROGRAMFILES64\${PRODUCT_NAME}"
++!else
++  InstallDir "$PROGRAMFILES\${PRODUCT_NAME}"
++!endif
+ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
+ RequestExecutionLevel admin
+ ShowInstDetails hide
+@@ -146,10 +152,12 @@ ${MementoSection} "sylfilter" sec_sylfilter
+   File /r "sylfilter\"
+ ${MementoSectionEnd}
+ 
++!ifndef DISABLE_BSFILTER
+ ${MementoSection} "bsfilter" sec_bsfilter
+   SetOutPath "$INSTDIR"
+   File /r "bsfilter\"
+ ${MementoSectionEnd}
++!endif
+ 
+ ${MementoSection} "$(desktop_shortcut)" sec_desktop_shortcut
+   SetShellVarContext current
+@@ -259,58 +267,10 @@ Section "!un.Sylpheed" sec_un_sylpheed
+   Delete "$SMPROGRAMS\${PRODUCT_NAME}\$(uninstall_lnk).lnk"
+   SetShellVarContext current
+ 
+-  Delete "$INSTDIR\curl.exe"
+-  Delete "$INSTDIR\gpgme-w32spawn.exe"
+-  Delete "$INSTDIR\gspawn-win32-helper-console.exe"
+-  Delete "$INSTDIR\gspawn-win32-helper.exe"
+-  Delete "$INSTDIR\iconv.dll"
+-  Delete "$INSTDIR\intl.dll"
+-  Delete "$INSTDIR\jpeg62.dll"
+-  Delete "$INSTDIR\libasprintf-0.dll"
+-  Delete "$INSTDIR\libassuan-0.dll"
+-  Delete "$INSTDIR\libatk-1.0-0.dll"
+-  Delete "$INSTDIR\libcairo-2.dll"
+-  Delete "$INSTDIR\libcompface.dll"
+-  Delete "$INSTDIR\libeay32.dll"
+-  Delete "$INSTDIR\libffi-6.dll"
+-  Delete "$INSTDIR\libgdk-win32-2.0-0.dll"
+-  Delete "$INSTDIR\libgdk_pixbuf-2.0-0.dll"
+-  Delete "$INSTDIR\libgio-2.0-0.dll"
+-  Delete "$INSTDIR\libglib-2.0-0.dll"
+-  Delete "$INSTDIR\libgmodule-2.0-0.dll"
+-  Delete "$INSTDIR\libgobject-2.0-0.dll"
+-  Delete "$INSTDIR\libgpg-error-0.dll"
+-  Delete "$INSTDIR\libgpgme-11.dll"
+-  Delete "$INSTDIR\libgthread-2.0-0.dll"
+-  Delete "$INSTDIR\libgtk-win32-2.0-0.dll"
+-  Delete "$INSTDIR\libonig.dll"
+-  Delete "$INSTDIR\libpango-1.0-0.dll"
+-  Delete "$INSTDIR\libpangocairo-1.0-0.dll"
+-  Delete "$INSTDIR\libpangowin32-1.0-0.dll"
+-  Delete "$INSTDIR\libpng14-14.dll"
+-  Delete "$INSTDIR\libsylph-0-1.dll"
+-  Delete "$INSTDIR\libsylpheed-plugin-0-1.dll"
+-  Delete "$INSTDIR\ssleay32.dll"
+-  Delete "$INSTDIR\sylpheed.exe"
+-  Delete "$INSTDIR\wabread.exe"
+-  Delete "$INSTDIR\zlib1.dll"
+-
+-  Delete "$INSTDIR\README-win32-es.txt"
+-  Delete "$INSTDIR\README-win32-ja.txt"
+-  Delete "$INSTDIR\README-win32.txt"
+-  Delete "$INSTDIR\README.txt"
+-
+-  Delete "$INSTDIR\sample-sylpheed.ini"
++!include "sylpheed-un_sylpheed.nsh"
+ 
+-  Delete "$INSTDIR\sylpheed-128x128.png"
+-  Delete "$INSTDIR\sylpheed-64x64.png"
+-  Delete "$INSTDIR\sylpheed-mailto-protocol_admin.reg"
+-  Delete "$INSTDIR\sylpheed-mailto-protocol_user.reg"
+-  Delete "$INSTDIR\sylpheed.png"
++  Delete "$INSTDIR\README.txt"
+   Delete "$INSTDIR\${PRODUCT_NAME}.url"
+-
+-  Delete "$INSTDIR\plugin-updater.exe"
+-  Delete "$INSTDIR\update-manager.exe"
+   Delete "$INSTDIR\uninst.exe"
+ 
+   RMDir /r "$INSTDIR\doc"
+@@ -374,11 +334,13 @@ Section "un.sylfilter" sec_un_sylfilter
+   Delete "$INSTDIR\sylfilter-cui.exe"
+ SectionEnd
+ 
++!ifndef DISABLE_BSFILTER
+ Section "un.bsfilter" sec_un_bsfilter
+   ; bsfilter components
+   Delete "$INSTDIR\bsfilter"
+   Delete "$INSTDIR\bsfilterw.exe"
+ SectionEnd
++!endif
+ 
+ Section "un.$(desktop_shortcut)" sec_un_desktop_shortcut
+   SetShellVarContext current
+@@ -424,7 +386,9 @@ SectionEnd
+   !insertmacro MUI_DESCRIPTION_TEXT ${sec_autoenc_plugin} "$(autoenc_plugin_description)"
+ !endif
+   !insertmacro MUI_DESCRIPTION_TEXT ${sec_sylfilter} "$(sylfilter_description)"
++!ifndef DISABLE_BSFILTER
+   !insertmacro MUI_DESCRIPTION_TEXT ${sec_bsfilter} "$(bsfilter_description)"
++!endif
+   !insertmacro MUI_DESCRIPTION_TEXT ${sec_desktop_shortcut} "$(desktop_shortcut_description)"
+   !insertmacro MUI_DESCRIPTION_TEXT ${sec_quick_shortcut} "$(quick_shortcut_description)"
+   !insertmacro MUI_DESCRIPTION_TEXT ${sec_handler} "$(handler_description)"
+@@ -440,7 +404,9 @@ SectionEnd
+   !insertmacro MUI_DESCRIPTION_TEXT ${sec_un_autoenc_plugin} "$(un_autoenc_plugin_description)"
+ !endif
+   !insertmacro MUI_DESCRIPTION_TEXT ${sec_un_sylfilter} "$(un_sylfilter_description)"
++!ifndef DISABLE_BSFILTER
+   !insertmacro MUI_DESCRIPTION_TEXT ${sec_un_bsfilter} "$(un_bsfilter_description)"
++!endif
+   !insertmacro MUI_DESCRIPTION_TEXT ${sec_un_desktop_shortcut} "$(un_desktop_shortcut_description)"
+   !insertmacro MUI_DESCRIPTION_TEXT ${sec_un_quick_shortcut} "$(un_quick_shortcut_description)"
+   ; handler is not uninstallable.
+@@ -539,10 +505,12 @@ check_app_running:
+   !insertmacro SetSectionFlag ${sec_un_sylfilter} ${SF_RO}
+   sylfilter_file_exists:
+ 
++!ifndef DISABLE_BSFILTER
+   IfFileExists "$INSTDIR\bsfilter" bsfilter_file_exists
+   !insertmacro UnselectSection ${sec_un_bsfilter}
+   !insertmacro SetSectionFlag ${sec_un_bsfilter} ${SF_RO}
+   bsfilter_file_exists:
++!endif
+ 
+   SetShellVarContext current
+   IfFileExists "$DESKTOP\Sylpheed.lnk" desktop_shortcut_file_exists
+diff --git a/nsis/update-manager.nsi b/nsis/update-manager.nsi
+index f79a8a6..2532207 100644
+--- a/nsis/update-manager.nsi
++++ b/nsis/update-manager.nsi
+@@ -2,6 +2,8 @@
+ 
+ !include "sylpheed-defs.nsh"
+ 
++Unicode True
++
+ SetCompressor /SOLID lzma
+ 
+ ;--------------------------------
+-- 
+1.7.9
+

@@ -1,0 +1,107 @@
+From d81b008813c5ac20a934920c1119705814ecb252 Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Wed, 30 Nov 2022 02:58:36 +0700
+Subject: [PATCH 1/2] Import compface-1.5.2-1.src.patch
+
+---
+ ChangeLog   |    4 ++++
+ Makefile.in |   44 +++++++++++++++++++++++++++-----------------
+ 2 files changed, 31 insertions(+), 17 deletions(-)
+
+diff --git a/ChangeLog b/ChangeLog
+index 8263f69..6a3a34f 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -34,3 +34,7 @@
+ 	configure.ac and rewrote obsolete constructions.  Redid installation
+ 	in `make install' so it actually worked, including on Cygwin
+ 	(needs the EXEEXT variable from `configure').
++
++2005-10-06  Dr. Volker Zell  <dr.volker.zell@oracle.com>
++
++	Added DESTDIR support when installing.
+diff --git a/Makefile.in b/Makefile.in
+index 08ce390..ff1b3c1 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -1,6 +1,7 @@
+ prefix          = @prefix@
+ exec_prefix     = @exec_prefix@
+ srcdir          = @srcdir@
++datarootdir     = @datarootdir@
+ BINDIR		= @bindir@
+ LIBDIR		= @libdir@
+ MANDIR		= @mandir@
+@@ -24,6 +25,8 @@ UNNAMEEXE	= $(UNNAME)$(EXEEXT)
+ EXECUTABLE	= $(BINDIR)/$(NAMEEXE)
+ UNEXECUTABLE	= $(BINDIR)/$(UNNAMEEXE)
+ LIBNAME		= lib$(NAME).a
++IMPLIBNAME	= lib$(NAME).dll.a
++SHLIB		= cyg$(NAME)-0.dll
+ LIBRARY		= $(LIBDIR)/$(LIBNAME)
+ MAN1DIR		= $(MANDIR)/man1
+ MAN3DIR		= $(MANDIR)/man3
+@@ -45,16 +48,21 @@ LIBS		= @LIBS@
+ 
+ all:		$(NAMEEXE) $(UNNAMEEXE)
+ 
+-$(NAMEEXE) :	cmain.o compface.o $(LIBNAME)
+-		$(CC) $(LDFLAGS) -o $@ cmain.o compface.o $(LIBNAME)
++$(NAMEEXE) :	cmain.o compface.o $(SHLIB)
++		$(CC) $(LDFLAGS) -o $@ cmain.o compface.o $(IMPLIBNAME)
+ 
+-$(UNNAMEEXE) :	uncmain.o $(LIBNAME)
+-		$(CC) $(LDFLAGS) -o $@ uncmain.o $(LIBNAME)
++$(UNNAMEEXE) :	uncmain.o $(SHLIB)
++		$(CC) $(LDFLAGS) -o $@ uncmain.o $(IMPLIBNAME)
+ 
+ $(LIBNAME) :	$(OBJECTS)
+ 		ar rc $(LIBNAME) $(OBJECTS)
+ 		-$(RANLIB) $(LIBNAME)
+ 
++$(SHLIB) :	$(LIBNAME)
++		gcc -shared -o $(SHLIB) -Wl,--out-implib=$(IMPLIBNAME) \
++		-Wl,--export-all-symbols -Wl,--enable-auto-import \
++		-Wl,--whole-archive $(LIBNAME) -Wl,--no-whole-archive
++
+ lint :
+ 		lint -abchx $(SOURCES)
+ 
+@@ -74,19 +82,21 @@ dist: $(DISTFILES)
+ 		$(RM) -rf `cat .fname` .fname
+ 
+ install: 	$(NAMEEXE) $(UNNAMEEXE) $(LIBNAME)
+-		$(INSTALL_PROGRAM) -d $(BINDIR) $(LIBDIR) $(MAN1DIR) $(MAN3DIR) $(INCLUDEDIR)
+-		$(INSTALL_PROGRAM) $(srcdir)/$(NAMEEXE) $(EXECUTABLE) 
+-		-chmod 0755 $(EXECUTABLE)
+-		-strip $(EXECUTABLE)
+-		$(INSTALL_PROGRAM) $(srcdir)/$(UNNAMEEXE) $(UNEXECUTABLE)
+-		-chmod 0755 $(UNEXECUTABLE)
+-		-strip $(UNEXECUTABLE)
+-		$(INSTALL_DATA) $(srcdir)/$(NAME).1 $(MAN1DIR)/$(NAME).1
+-		cd $(MAN1DIR) && $(RM) ./$(UNNAME).1 && $(LN_S) $(NAME).1 $(UNNAME).1
+-		$(INSTALL_DATA) $(srcdir)/$(NAME).3 $(MAN3DIR)/$(NAME).3
+-		cd $(MAN3DIR) && $(RM) ./$(UNNAME).3 && $(LN_S) $(NAME).3 $(UNNAME).3
+-		for hdr in $(INSTALLHEADERS); do $(INSTALL_DATA) $(srcdir)/$${hdr} $(INCLUDEDIR)/$${hdr}; done
+-		$(INSTALL_DATA) $(srcdir)/$(LIBNAME) $(LIBRARY)
++		$(INSTALL_PROGRAM) -d $(DESTDIR)$(BINDIR) $(DESTDIR)$(LIBDIR) $(DESTDIR)$(MAN1DIR) $(DESTDIR)$(MAN3DIR) $(DESTDIR)$(INCLUDEDIR)
++		$(INSTALL_PROGRAM) $(srcdir)/$(NAMEEXE) $(DESTDIR)$(EXECUTABLE) 
++		-chmod 0755 $(DESTDIR)$(EXECUTABLE)
++		-strip $(DESTDIR)$(EXECUTABLE)
++		$(INSTALL_PROGRAM) $(srcdir)/$(UNNAMEEXE) $(DESTDIR)$(UNEXECUTABLE)
++		-chmod 0755 $(DESTDIR)$(UNEXECUTABLE)
++		-strip $(DESTDIR)$(UNEXECUTABLE)
++		$(INSTALL_DATA) $(srcdir)/$(NAME).1 $(DESTDIR)$(MAN1DIR)/$(NAME).1
++		cd $(DESTDIR)$(MAN1DIR) && $(RM) ./$(UNNAME).1 && $(LN_S) $(NAME).1 $(UNNAME).1
++		$(INSTALL_DATA) $(srcdir)/$(NAME).3 $(DESTDIR)$(MAN3DIR)/$(NAME).3
++		cd $(DESTDIR)$(MAN3DIR) && $(RM) ./$(UNNAME).3 && $(LN_S) $(NAME).3 $(UNNAME).3
++		for hdr in $(INSTALLHEADERS); do $(INSTALL_DATA) $(srcdir)/$${hdr} $(DESTDIR)$(INCLUDEDIR)/$${hdr}; done
++		$(INSTALL_DATA) $(srcdir)/$(LIBNAME) $(DESTDIR)$(LIBRARY)
++		$(INSTALL_DATA) $(srcdir)/$(IMPLIBNAME) $(DESTDIR)$(LIBDIR)
++		$(INSTALL_PROGRAM) $(srcdir)/$(SHLIB) $(DESTDIR)$(BINDIR)
+ 
+ shar :
+ 		shar.script $(OTHERS) $(HDRS) $(SOURCES) > $(NAME).sh
+-- 
+1.7.9
+

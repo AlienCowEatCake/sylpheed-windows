@@ -1,0 +1,25 @@
+From 33cee7f742cb592b29055732286c2e8db41c171a Mon Sep 17 00:00:00 2001
+From: Ricardo Mones <mones@debian.org>
+Date: Tue, 20 Sep 2022 20:33:17 +0700
+Subject: [PATCH 05/10] fix typo in import.c file
+
+---
+ src/import.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/src/import.c b/src/import.c
+index a59f11f..b323270 100644
+--- a/src/import.c
++++ b/src/import.c
+@@ -734,7 +734,7 @@ static void import_filesel_cb(GtkWidget *widget, gpointer data)
+ 
+ 	utf8_filename = g_filename_to_utf8(filename, -1, NULL, NULL, NULL);
+ 	if (!utf8_filename) {
+-		g_warning("import_filesel_cb(): failed to convert characer set.");
++		g_warning("import_filesel_cb(): failed to convert character set.");
+ 		utf8_filename = g_strdup(filename);
+ 	}
+ 	gtk_entry_set_text(GTK_ENTRY(file_entry), utf8_filename);
+-- 
+1.7.9
+

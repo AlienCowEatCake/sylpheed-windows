@@ -1,0 +1,55 @@
+From fca3e0e4d8e48461444e2fe43b69e96362d3875e Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Mon, 28 Nov 2022 23:09:20 +0700
+Subject: [PATCH 08/10] Fix Windows naming conflicts
+
+---
+ src/filesel.c    |   12 ++++++++++++
+ src/headerview.c |    3 +++
+ 2 files changed, 15 insertions(+), 0 deletions(-)
+
+diff --git a/src/filesel.c b/src/filesel.c
+index e4e3ecd..2c224c4 100644
+--- a/src/filesel.c
++++ b/src/filesel.c
+@@ -27,11 +27,23 @@
+ #include <gtk/gtkstock.h>
+ 
+ #ifdef G_OS_WIN32
++/* BEGIN WORKAROUND */
++#  define Folder	Folder__
++#  define FolderItem	FolderItem__
++#  define SORT_ASCENDING	SORT_ASCENDING__
++#  define SORT_DESCENDING	SORT_DESCENDING__
++/* END WORKAROUND */
+ #  define COBJMACROS
+ #  include <windows.h>
+ #  include <objbase.h>
+ #  include <objidl.h>
+ #  include <shlobj.h>
++/* BEGIN WORKAROUND */
++#  undef Folder
++#  undef FolderItem
++#  undef SORT_ASCENDING
++#  undef SORT_DESCENDING
++/* END WORKAROUND */
+ #endif
+ 
+ #include "main.h"
+diff --git a/src/headerview.c b/src/headerview.c
+index 984e8bc..8558884 100644
+--- a/src/headerview.c
++++ b/src/headerview.c
+@@ -41,6 +41,9 @@
+ 
+ #if HAVE_LIBCOMPFACE
+ #  include <compface.h>
++#  if defined(G_OS_WIN32) && defined(WORD)
++#    undef WORD
++#  endif
+ #endif
+ 
+ #include "main.h"
+-- 
+1.7.9
+

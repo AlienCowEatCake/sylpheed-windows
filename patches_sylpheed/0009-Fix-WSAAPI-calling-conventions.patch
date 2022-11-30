@@ -1,0 +1,33 @@
+From ed813310aa8a1c86262c3345f46a8016ad149532 Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Wed, 30 Nov 2022 16:55:29 +0700
+Subject: [PATCH 09/10] Fix WSAAPI calling conventions
+
+---
+ libsylph/socket.c |    7 +++++--
+ 1 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/libsylph/socket.c b/libsylph/socket.c
+index 228c8db..d4628ef 100644
+--- a/libsylph/socket.c
++++ b/libsylph/socket.c
+@@ -150,11 +150,14 @@ static gint sock_info_connect_by_hostname
+ 					(SockInfo	*sock);
+ #else
+ #ifdef G_OS_WIN32
+-typedef int (*GetAddrInfoFunc)		(const char	*node,
++#ifndef WSAAPI
++#define WSAAPI WINAPI
++#endif
++typedef int (WSAAPI *GetAddrInfoFunc)	(const char	*node,
+ 					 const char	*service,
+ 					 const struct addrinfo *hints,
+ 					 struct addrinfo **res);
+-typedef void (*FreeAddrInfoFunc)	(struct addrinfo *res);
++typedef void (WSAAPI *FreeAddrInfoFunc)	(struct addrinfo *res);
+ 
+ static GetAddrInfoFunc getaddrinfo_func = NULL;
+ static FreeAddrInfoFunc freeaddrinfo_func = NULL;
+-- 
+1.7.9
+
