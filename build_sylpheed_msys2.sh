@@ -131,6 +131,11 @@ make -j4
 make install-strip
 cd ..
 
+g++ -O3 -std=c++14 -shared -fPIC -o "${DIST_PREFIX}/bin/libenchant-2.dll" -Wall \
+    -Wl,--export-all-symbols -Wl,--enable-auto-import \
+    -Wl,--whole-archive "${SOURCE_DIR}/enchant/enchant.cpp" -Wl,--no-whole-archive \
+    -lole32 -s
+
 rm -rf "${DIST_PREFIX}/bin/compface.exe" "${DIST_PREFIX}/bin/uncompface.exe"
 mv "${DIST_PREFIX}/bin/"* "${DIST_PREFIX}/"
 cp -a "${DIST_PREFIX}/sylfilter.exe" "${DIST_PREFIX}/sylfilter-cui.exe"
