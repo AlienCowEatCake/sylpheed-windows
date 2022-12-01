@@ -65,7 +65,7 @@ pacman -S --needed --noconfirm \
     ${MSYSTEM_PKG_PREFIX}-oniguruma \
     ${MSYSTEM_PKG_PREFIX}-libiconv \
     ${MSYSTEM_PKG_PREFIX}-ca-certificates \
-    ${MSYSTEM_PKG_PREFIX}-sqlite3
+    ${MSYSTEM_PKG_PREFIX}-gpgme
 
 function autogenSylpheed {
     local ACLOCAL=aclocal-1.15
@@ -105,7 +105,7 @@ autogenSylpheed
     --with-localedir=share/locale \
     --with-themedir=share/icons \
     --enable-oniguruma --enable-threads \
-    --disable-gpgme --disable-jpilot \
+    --enable-gpgme --disable-jpilot \
     --disable-ldap --enable-ssl \
     --enable-compface --enable-gtkspell \
     --enable-libcurl --enable-ipv6 \
@@ -119,11 +119,25 @@ make install-strip
 strip "${DIST_PREFIX}/lib/sylpheed/plugins/attachment_tool.dll"
 cd ..
 
+curl -LO http://fallabs.com/qdbm/qdbm-1.8.78.tar.gz
+tar -xvpf qdbm-1.8.78.tar.gz
+cd qdbm-1.8.78
+./configure --prefix="${DIST_PREFIX}" --enable-stable --enable-pthread --enable-zlib --enable-iconv
+make -j4 libqdbm.a
+make install-strip || mkdir -p "${DIST_PREFIX}/lib/pkgconfig" && cat << EOF > "${DIST_PREFIX}/lib/pkgconfig/qdbm.pc"
+Name: QDBM
+Description: a high performance embedded database library
+Version: 1.8.78
+Libs: -L${DIST_PREFIX}/lib -lqdbm -lz -lpthread -liconv
+Cflags: -I${DIST_PREFIX}/include
+EOF
+cd ..
+
 curl -LO http://sylpheed.sraoss.jp/sylfilter/src/sylfilter-0.8.tar.gz
 tar -xvpf sylfilter-0.8.tar.gz
 cd sylfilter-0.8
 # find "${SOURCE_DIR}/patches_sylfilter" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
-./configure --prefix="${DIST_PREFIX}" --enable-shared --disable-static --enable-sqlite --disable-qdbm --disable-gdbm --with-libsylph=sylpheed \
+./configure --prefix="${DIST_PREFIX}" --enable-shared --disable-static --disable-sqlite --enable-qdbm --disable-gdbm --with-libsylph=sylpheed \
     CFLAGS=-O3 \
     CPPFLAGS="-I${DIST_PREFIX}/include -I${DIST_PREFIX}/include/sylpheed" \
     LDFLAGS="-L${DIST_PREFIX}/lib"
@@ -134,7 +148,22 @@ cd ..
 g++ -O3 -std=c++14 -shared -fPIC -o "${DIST_PREFIX}/bin/libenchant-2.dll" -Wall \
     -Wl,--export-all-symbols -Wl,--enable-auto-import \
     -Wl,--whole-archive "${SOURCE_DIR}/enchant/enchant.cpp" -Wl,--no-whole-archive \
-    -lole32 -s
+    -DNDEBUG -lole32 -s
+
+curl -Lo libwab-master.tar.gz https://github.com/pboettch/libwab/archive/refs/heads/master.tar.gz
+tar -xvpf libwab-master.tar.gz
+cd libwab-master
+gcc cencode.c libwab.c pstwabids.c tools.c uerr.c wabread.c \
+    $(pkg-config --cflags iconv) $(pkg-config --libs iconv) \
+    -O3 -DHAVE_ICONV -DNDEBUG -o "${DIST_PREFIX}/bin/wabread.exe" -s
+cd ..
+
+curl -LO https://sylpheed.sraoss.jp/sylpheed/others/bsfilter-1.0.17.rc4.tgz
+tar -xvpf bsfilter-1.0.17.rc4.tgz
+cd bsfilter-1.0.17.rc4
+cp -a bsfilter/bsfilter bsfilter/bsfilterw.exe "${DIST_PREFIX}/bin/"
+cp -a htdocs "${DIST_PREFIX}/share/sylpheed/bsfilter"
+cd ..
 
 rm -rf "${DIST_PREFIX}/bin/compface.exe" "${DIST_PREFIX}/bin/uncompface.exe"
 mv "${DIST_PREFIX}/bin/"* "${DIST_PREFIX}/"
@@ -155,11 +184,12 @@ find "${DIST_PREFIX}" \( -name '*.a' -o -name '*.la' \) -delete
 find "${DIST_PREFIX}" -name 'include' | sort | while IFS= read -r item ; do rm -rf "${item}" ; done
 
 cp -a "${MSYSTEM_PREFIX}/bin/curl.exe" "${DIST_PREFIX}/"
+cp -a "${MSYSTEM_PREFIX}/bin/gpgme-w32spawn.exe" "${DIST_PREFIX}/"
 find "${MSYSTEM_PREFIX}/bin" \( -name "gspawn*helper.exe" -o -name "gspawn*helper-console.exe" \) -exec cp -a \{\} "${DIST_PREFIX}/" \;
 cp -a "${MSYSTEM_PREFIX}/share/themes" "${DIST_PREFIX}/share/"
 
 function getDeps() {
-    find "${DIST_PREFIX}" \( -name '*.exe' -o -name '*.dll' \) -exec objdump --private-headers \{\} \; | grep 'DLL Name:' | sort | uniq | sed 's|.* ||'
+    find "${DIST_PREFIX}" \( -name '*.exe' -o -name '*.dll' \) -not -name 'bsfilterw.exe' -exec objdump --private-headers \{\} \; | grep 'DLL Name:' | sort | uniq | sed 's|.* ||'
 }
 
 function checkDll() {
@@ -198,7 +228,7 @@ function fixupExes() {
     cat << EOF | cmd
 set VCVARS="C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat"
 call %VCVARS% ${VCVARS_ARCH}
-$(find . -maxdepth 1 \( -name 'curl.exe' -o -name 'gspawn*helper.exe' -o -name 'syl-auth-helper.exe' -o -name 'sylfilter.exe' \) | sed 's|^\./|editbin /subsystem:windows |')
+$(find . -maxdepth 1 \( -name 'curl.exe' -o -name 'sylfilter.exe' \) | sed 's|^\./|editbin /subsystem:windows |')
 EOF
     popd > /dev/null
 }
@@ -220,7 +250,7 @@ EOF
 }
 
 function stripAll() {
-    find "${DIST_PREFIX}" \( -name '*.exe' -o -name '*.dll' \) | while IFS= read -r item ; do
+    find "${DIST_PREFIX}" \( -name '*.exe' -o -name '*.dll' \) -not -name 'bsfilterw.exe' | while IFS= read -r item ; do
         strip --strip-all "${item}" || strip "${item}" || true
     done
 }
@@ -246,7 +276,15 @@ cp -a "sylpheed-mailto-protocol_admin.reg" "sylpheed-mailto-protocol_user.reg" "
 mkdir -p "${DIST_PREFIX}/doc/plugins"
 cp -a "plugin/attachment_tool/README" "${DIST_PREFIX}/doc/plugins/README.attachment_tool.txt"
 for i in AUTHORS ChangeLog ChangeLog.ja COPYING COPYING.LIB INSTALL INSTALL.ja LICENSE NEWS NEWS-2.0 PLUGIN.ja.txt PLUGIN.txt README README.es README.ja TODO TODO.ja ; do
-    cp -a ${i} "${DIST_PREFIX}/doc/"
+    cp -a "${i}" "${DIST_PREFIX}/doc/${i}"
+    unix2dos "${DIST_PREFIX}/doc/${i}"
+done
+cd ..
+cd sylfilter-0.8
+mkdir -p "${DIST_PREFIX}/doc/sylfilter"
+for i in NEWS README COPYING ; do
+    cp -a "${i}" "${DIST_PREFIX}/doc/sylfilter/${i}.txt"
+    unix2dos "${DIST_PREFIX}/doc/sylfilter/${i}.txt"
 done
 cd ..
 
@@ -260,10 +298,14 @@ cp -a "${DIST_PREFIX}" Sylpheed
 mkdir -p plugins/doc
 mv Sylpheed/plugins plugins/
 mv Sylpheed/doc/plugins plugins/doc/
-mkdir -p sylfilter
+mkdir -p sylfilter/doc
 mv Sylpheed/sylfilter.exe Sylpheed/sylfilter-cui.exe sylfilter/
+mv Sylpheed/doc/sylfilter sylfilter/doc/
+mkdir -p bsfilter/doc
+mv Sylpheed/bsfilter Sylpheed/bsfilterw.exe bsfilter/
+mv Sylpheed/doc/bsfilter bsfilter/doc/
 find Sylpheed -mindepth 1 -maxdepth 1 -type f | sed 's|.*/\(.*\)$|  Delete "$INSTDIR\\\1"|' > sylpheed-un_sylpheed.nsh
-MSYS2_ARG_CONV_EXCL="*" makensis /DDISABLE_BSFILTER /DARCH_${NSIS_ARCH} sylpheed.nsi
+MSYS2_ARG_CONV_EXCL="*" makensis /DARCH_${NSIS_ARCH} sylpheed.nsi
 find . -mindepth 1 -maxdepth 1 -type f -name 'Sylpheed*_setup.exe' | while IFS= read -r item ; do
     name="${item##*/}"
     mv "${name}" "${DIST_PREFIX}/../$(echo "${name}" | sed "s|\(.*\)\(\.exe\)|\1_${MSYSTEM,,?}\2|")"
@@ -272,7 +314,7 @@ cd ../..
 
 pushd "${DIST_PREFIX}" > /dev/null
 cd ..
-zip -9r "${DIST_PREFIX}.zip" "${DIST_PREFIX}"
+zip -9r "${DIST_PREFIX##*/}.zip" "${DIST_PREFIX##*/}"
 popd > /dev/null
 
 cd "${SOURCE_DIR}"

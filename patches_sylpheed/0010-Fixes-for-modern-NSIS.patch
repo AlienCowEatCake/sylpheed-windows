@@ -1,4 +1,4 @@
-From 77d233a2f2c23d56d91d880df420bb6f87adfcf1 Mon Sep 17 00:00:00 2001
+From 0c74ab03fa43b87860553462381461d46a9246c1 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Wed, 30 Nov 2022 23:25:30 +0700
 Subject: [PATCH 10/10] Fixes for modern NSIS
@@ -9,9 +9,9 @@ Subject: [PATCH 10/10] Fixes for modern NSIS
  nsis/spanish.nsh              |   16 +++---
  nsis/sylpheed-defs.nsh        |    2 +-
  nsis/sylpheed-un_sylpheed.nsh |   50 +++++++++++++++++
- nsis/sylpheed.nsi             |   72 +++++++-----------------
+ nsis/sylpheed.nsi             |   62 +++-----------------
  nsis/update-manager.nsi       |    2 +
- 7 files changed, 145 insertions(+), 123 deletions(-)
+ 7 files changed, 135 insertions(+), 123 deletions(-)
  create mode 100644 nsis/sylpheed-un_sylpheed.nsh
 
 diff --git a/nsis/japanese.nsh b/nsis/japanese.nsh
@@ -287,7 +287,7 @@ index 0000000..42db688
 +  Delete "$INSTDIR\plugin-updater.exe"
 +  Delete "$INSTDIR\update-manager.exe"
 diff --git a/nsis/sylpheed.nsi b/nsis/sylpheed.nsi
-index 86ae32a..9cc15be 100644
+index 86ae32a..a5f4e78 100644
 --- a/nsis/sylpheed.nsi
 +++ b/nsis/sylpheed.nsi
 @@ -7,6 +7,8 @@
@@ -321,20 +321,7 @@ index 86ae32a..9cc15be 100644
  InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
  RequestExecutionLevel admin
  ShowInstDetails hide
-@@ -146,10 +152,12 @@ ${MementoSection} "sylfilter" sec_sylfilter
-   File /r "sylfilter\"
- ${MementoSectionEnd}
- 
-+!ifndef DISABLE_BSFILTER
- ${MementoSection} "bsfilter" sec_bsfilter
-   SetOutPath "$INSTDIR"
-   File /r "bsfilter\"
- ${MementoSectionEnd}
-+!endif
- 
- ${MementoSection} "$(desktop_shortcut)" sec_desktop_shortcut
-   SetShellVarContext current
-@@ -259,58 +267,10 @@ Section "!un.Sylpheed" sec_un_sylpheed
+@@ -259,58 +265,10 @@ Section "!un.Sylpheed" sec_un_sylpheed
    Delete "$SMPROGRAMS\${PRODUCT_NAME}\$(uninstall_lnk).lnk"
    SetShellVarContext current
  
@@ -395,53 +382,6 @@ index 86ae32a..9cc15be 100644
    Delete "$INSTDIR\uninst.exe"
  
    RMDir /r "$INSTDIR\doc"
-@@ -374,11 +334,13 @@ Section "un.sylfilter" sec_un_sylfilter
-   Delete "$INSTDIR\sylfilter-cui.exe"
- SectionEnd
- 
-+!ifndef DISABLE_BSFILTER
- Section "un.bsfilter" sec_un_bsfilter
-   ; bsfilter components
-   Delete "$INSTDIR\bsfilter"
-   Delete "$INSTDIR\bsfilterw.exe"
- SectionEnd
-+!endif
- 
- Section "un.$(desktop_shortcut)" sec_un_desktop_shortcut
-   SetShellVarContext current
-@@ -424,7 +386,9 @@ SectionEnd
-   !insertmacro MUI_DESCRIPTION_TEXT ${sec_autoenc_plugin} "$(autoenc_plugin_description)"
- !endif
-   !insertmacro MUI_DESCRIPTION_TEXT ${sec_sylfilter} "$(sylfilter_description)"
-+!ifndef DISABLE_BSFILTER
-   !insertmacro MUI_DESCRIPTION_TEXT ${sec_bsfilter} "$(bsfilter_description)"
-+!endif
-   !insertmacro MUI_DESCRIPTION_TEXT ${sec_desktop_shortcut} "$(desktop_shortcut_description)"
-   !insertmacro MUI_DESCRIPTION_TEXT ${sec_quick_shortcut} "$(quick_shortcut_description)"
-   !insertmacro MUI_DESCRIPTION_TEXT ${sec_handler} "$(handler_description)"
-@@ -440,7 +404,9 @@ SectionEnd
-   !insertmacro MUI_DESCRIPTION_TEXT ${sec_un_autoenc_plugin} "$(un_autoenc_plugin_description)"
- !endif
-   !insertmacro MUI_DESCRIPTION_TEXT ${sec_un_sylfilter} "$(un_sylfilter_description)"
-+!ifndef DISABLE_BSFILTER
-   !insertmacro MUI_DESCRIPTION_TEXT ${sec_un_bsfilter} "$(un_bsfilter_description)"
-+!endif
-   !insertmacro MUI_DESCRIPTION_TEXT ${sec_un_desktop_shortcut} "$(un_desktop_shortcut_description)"
-   !insertmacro MUI_DESCRIPTION_TEXT ${sec_un_quick_shortcut} "$(un_quick_shortcut_description)"
-   ; handler is not uninstallable.
-@@ -539,10 +505,12 @@ check_app_running:
-   !insertmacro SetSectionFlag ${sec_un_sylfilter} ${SF_RO}
-   sylfilter_file_exists:
- 
-+!ifndef DISABLE_BSFILTER
-   IfFileExists "$INSTDIR\bsfilter" bsfilter_file_exists
-   !insertmacro UnselectSection ${sec_un_bsfilter}
-   !insertmacro SetSectionFlag ${sec_un_bsfilter} ${SF_RO}
-   bsfilter_file_exists:
-+!endif
- 
-   SetShellVarContext current
-   IfFileExists "$DESKTOP\Sylpheed.lnk" desktop_shortcut_file_exists
 diff --git a/nsis/update-manager.nsi b/nsis/update-manager.nsi
 index f79a8a6..2532207 100644
 --- a/nsis/update-manager.nsi
