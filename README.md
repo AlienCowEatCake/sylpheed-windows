@@ -15,5 +15,6 @@ This project provides unofficial builds of Sylpheed with updated libraries and t
 ## See also
 * https://sylpheed.sraoss.jp/en/
 * https://sylpheed.sraoss.jp/sylpheed/win32/
+* https://github.com/sylpheed-mail/sylpheed
 * https://github.com/AlienCowEatCake/sylpheed-macos
 * https://github.com/AlienCowEatCake/WinToastLibC
