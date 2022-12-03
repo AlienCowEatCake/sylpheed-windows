@@ -1,0 +1,476 @@
+From 082d00d662c0fe74380ba4979fbe43d53d845b16 Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Sun, 4 Dec 2022 03:28:39 +0700
+Subject: [PATCH 10/10] Use native Windows toast notifications
+
+---
+ configure.ac             |   35 ++++
+ src/notificationwindow.c |  394 ++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 429 insertions(+), 0 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 2a0c2c9..057d506 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -362,6 +362,40 @@ else
+ 	AC_MSG_RESULT(no)
+ fi
+ 
++dnl check for WinToastLibC option
++AC_ARG_ENABLE(wintoast,
++	[  --disable-wintoast      Disable WinToastLibC support],
++	[ac_cv_enable_wintoast=$enableval], [ac_cv_enable_wintoast=yes])
++
++dnl automated checks for WinToastLibC support.
++AC_MSG_CHECKING([whether to use WinToastLibC])
++if test x"$ac_cv_enable_wintoast" = xyes; then
++	AC_MSG_RESULT(yes)
++	AC_MSG_CHECKING([for WinToastLibC support])
++	if test "$native_win32" = yes; then
++		AC_CACHE_VAL(ac_cv_wintoast,[
++			ac_save_LIBS="$LIBS"
++			LIBS="$LIBS -lwintoastlibc -lshlwapi -lole32"
++			AC_TRY_LINK([ #include <wintoastlibc.h> ],
++				[ BOOL c = WTLC_isCompatible(); ],
++				[ ac_cv_wintoast=yes ],
++				[ LIBS="$ac_save_LIBS"
++				  ac_cv_wintoast=no ])
++		])
++	else
++		ac_cv_wintoast=no
++	fi
++	AC_MSG_RESULT($ac_cv_wintoast)
++	if test $ac_cv_wintoast = yes; then
++		AC_DEFINE(USE_WINTOASTLIBC, 1, Define if you want WinToastLibC support.)
++	else
++		AC_MSG_WARN(*** WinToastLibC will not be supported ***)
++		ac_cv_enable_wintoast=no
++	fi
++else
++	AC_MSG_RESULT(no)
++fi
++
+ dnl Check for libcurl support
+ AC_ARG_ENABLE(libcurl,
+ 	[  --disable-libcurl       Do not use libcurl],
+@@ -546,6 +580,7 @@ echo "compface      : $ac_cv_enable_compface"
+ echo "IPv6          : $ac_cv_enable_ipv6"
+ echo "GtkSpell      : $ac_cv_enable_gtkspell"
+ echo "Oniguruma     : $ac_cv_enable_oniguruma"
++echo "WinToastLibC  : $ac_cv_enable_wintoast"
+ echo "GThread       : $use_threads"
+ echo "libcurl       : $ac_cv_enable_libcurl"
+ echo ""
+diff --git a/src/notificationwindow.c b/src/notificationwindow.c
+index 966c708..07ec6fa 100644
+--- a/src/notificationwindow.c
++++ b/src/notificationwindow.c
+@@ -29,11 +29,405 @@
+ #  include <windows.h>
+ #endif
+ 
++#ifdef USE_WINTOASTLIBC
++#  include <wintoastlibc.h>
++#endif
++
+ #include "notificationwindow.h"
+ #include "mainwindow.h"
+ #include "utils.h"
+ #include "gtkutils.h"
+ 
++#ifdef USE_WINTOASTLIBC
++
++static BOOL wtlc_coinitialized = FALSE;
++static BOOL wtlc_failed_earlier = FALSE;
++static BOOL wtlc_icon_searched = FALSE;
++static gchar *wtlc_icon_path = NULL;
++static WTLC_Instance *wtlc_instance = NULL;
++static WTLC_Template *wtlc_templ = NULL;
++
++static gchar *dup_without_html_formatting(const gchar *str)
++{
++	gchar *result = NULL;
++	GRegex *re = g_regex_new("<[^>]*>", G_REGEX_MULTILINE | G_REGEX_NEWLINE_ANYCRLF, 0, NULL);
++	if (!re)
++		return g_strdup(str);
++	result = g_regex_replace(re, str, -1, 0, "", 0, NULL);
++	g_regex_unref(re);
++	if (result)
++		return result;
++	return g_strdup(str);
++}
++
++static void WTLCAPI wtlc_cb_toast_activated(void *user_data)
++{
++	debug_print("[WTLC] Toast activated\n");
++	main_window_popup(main_window_get());
++}
++
++static void WTLCAPI wtlc_cb_toast_activated_action(void *user_data, int action_index)
++{
++	wtlc_cb_toast_activated(user_data);
++}
++
++static void remove_delivered_notification()
++{
++	WTLC_clear(wtlc_instance);
++}
++
++static void deliver_notification(const gchar *message, const gchar *submessage)
++{
++	WTLC_Error error = WTLC_Error_NoError;
++	gchar *buf = NULL;
++	wchar_t *wbuf = NULL;
++
++	buf = dup_without_html_formatting(message);
++	wbuf = g_utf8_to_utf16(buf, -1, NULL, NULL, NULL);
++	g_free(buf);
++	WTLC_Template_setFirstLine(wtlc_templ, wbuf);
++	g_free(wbuf);
++
++	buf = dup_without_html_formatting(submessage);
++	wbuf = g_utf8_to_utf16(buf, -1, NULL, NULL, NULL);
++	g_free(buf);
++	WTLC_Template_setSecondLine(wtlc_templ, wbuf);
++	g_free(wbuf);
++
++	if (WTLC_showToast(wtlc_instance, wtlc_templ, NULL, &wtlc_cb_toast_activated,
++			   &wtlc_cb_toast_activated_action, NULL, NULL, &error) < 0) {
++		gchar *error_string = g_utf16_to_utf8(WTLC_strerror(error), -1, NULL, NULL, NULL);
++		log_error("[WTLC] WTLC_showToast error: %s\n", error_string);
++		g_free(error_string);
++	}
++}
++
++static wchar_t *find_icon_path(void)
++{
++	gchar *path;
++	if (wtlc_icon_searched) {
++		if (wtlc_icon_path)
++			return g_utf8_to_utf16(wtlc_icon_path, -1, NULL, NULL, NULL);
++		return NULL;
++	}
++	path = g_strconcat(get_startup_dir(), G_DIR_SEPARATOR_S, "sylpheed-128x128.png", NULL);
++	if (!is_file_exist(path)) {
++		g_free(path);
++		path = g_strconcat(get_startup_dir(), G_DIR_SEPARATOR_S, "sylpheed-64x64.png", NULL);
++		if (!is_file_exist(path)) {
++			g_free(path);
++			path = g_strconcat(get_startup_dir(), G_DIR_SEPARATOR_S, "sylpheed.png", NULL);
++			if (!is_file_exist(path)) {
++				g_free(path);
++				path = g_strconcat(get_startup_dir(),
++						   G_DIR_SEPARATOR_S, "share",
++						   G_DIR_SEPARATOR_S, "pixmaps",
++						   G_DIR_SEPARATOR_S, "sylpheed.png",
++						   NULL);
++				if (!is_file_exist(path)) {
++					g_free(path);
++					path = NULL;
++				}
++			}
++		}
++	}
++	if (path)
++		debug_print("[WTLC] Icon was found: %s\n", path);
++	else
++		debug_print("[WTLC] Icon was NOT found\n");
++	wtlc_icon_searched = TRUE;
++	wtlc_icon_path = path;
++	return find_icon_path();
++}
++
++#define RETURN_GREATER_OR_EQUAL(osvi, major, minor, build) \
++	do { \
++		if ((osvi).dwMajorVersion > (major)) \
++			return TRUE; \
++		if ((osvi).dwMajorVersion < (major)) \
++			return FALSE; \
++		if ((osvi).dwMinorVersion > (minor)) \
++			return TRUE; \
++		if ((osvi).dwMinorVersion < (minor)) \
++			return FALSE; \
++		if ((osvi).dwBuildNumber > (build)) \
++			return TRUE; \
++		if ((osvi).dwBuildNumber < (build)) \
++			return FALSE; \
++		return TRUE; \
++	} while(0)
++
++static BOOL greater_or_equal_rtl(DWORD major, DWORD minor, DWORD build)
++{
++	typedef LONG(WINAPI *RtlGetVersion_t)(PRTL_OSVERSIONINFOW);
++	HMODULE hNtdll = GetModuleHandleW(L"ntdll.dll");
++	if (hNtdll) {
++		RtlGetVersion_t RtlGetVersion_f = (RtlGetVersion_t)GetProcAddress(hNtdll, "RtlGetVersion");
++		if (RtlGetVersion_f) {
++			RTL_OSVERSIONINFOW rosvi;
++			ZeroMemory(&rosvi, sizeof(rosvi));
++			rosvi.dwOSVersionInfoSize = sizeof(rosvi);
++			if (RtlGetVersion_f(&rosvi) == 0)
++				RETURN_GREATER_OR_EQUAL(rosvi, major, minor, build);
++			return FALSE;
++		}
++		return FALSE;
++	}
++	return FALSE;
++}
++
++static BOOL greater_or_equal_k32(DWORD major, DWORD minor, DWORD build)
++{
++	OSVERSIONINFOW osvi;
++	ZeroMemory(&osvi, sizeof(osvi));
++	osvi.dwOSVersionInfoSize = sizeof(osvi);
++	if (GetVersionExW(&osvi))
++		RETURN_GREATER_OR_EQUAL(osvi, major, minor, build);
++	return FALSE;
++}
++
++#undef RETURN_GREATER_OR_EQUAL
++
++static BOOL greater_or_equal(DWORD major, DWORD minor, DWORD build)
++{
++	return greater_or_equal_rtl(major, minor, build) || greater_or_equal_k32(major, minor, build);
++}
++
++static gchar *get_error_from_system(void)
++{
++	wchar_t *msg_buf = NULL;
++	DWORD err = GetLastError();
++	gchar *result = NULL;
++
++	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, err,
++		       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), msg_buf, 0, NULL);
++	if (msg_buf) {
++		result = g_utf16_to_utf8(msg_buf, -1, NULL, NULL, NULL);
++		LocalFree(msg_buf);
++	} else {
++		result = g_strdup("(NULL)");
++	}
++	return result;
++}
++
++static BOOL valid_aumid_required(void)
++{
++	/* Show notifications without registered AUMID is available since Windows 10 build 1909 */
++	return !greater_or_equal(10, 0, 18363);
++}
++
++static BOOL shortcut_aumid_required(void)
++{
++	/* Show notifications without shortcut with AUMID is available since Windows 10 */
++	return !greater_or_equal(10, 0, 0);
++}
++
++static BOOL register_basic_aumid(LPCWSTR aumid, LPCWSTR display_name, LPCWSTR icon_uri)
++{
++	LONG ret;
++	DWORD type;
++	HKEY aumid_root, aumid_key;
++
++	aumid_root = NULL;
++	ret = RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Classes\\AppUserModelId", 0, KEY_QUERY_VALUE, &aumid_root);
++	if (ret == ERROR_FILE_NOT_FOUND) {
++		aumid_root = NULL;
++		ret = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Classes\\AppUserModelId", 0, NULL, 0, KEY_WRITE, NULL, &aumid_root, NULL);
++		if (ret != ERROR_SUCCESS) {
++			gchar *error_string = get_error_from_system();
++			log_error("[WTLC] RegCreateKeyExW HKCU\\Software\\Classes\\AppUserModelId error: %s\n", error_string);
++			g_free(error_string);
++			RegCloseKey(aumid_root);
++			return FALSE;
++		}
++	} else if (ret != ERROR_SUCCESS) {
++		gchar *error_string = get_error_from_system();
++		log_error("[WTLC] RegOpenKeyExW HKCU\\Software\\Classes\\AppUserModelId error: %s\n", error_string);
++		g_free(error_string);
++		return FALSE;
++	}
++
++	aumid_key = NULL;
++	ret = RegOpenKeyExW(aumid_root, aumid, 0, KEY_QUERY_VALUE, &aumid_key);
++	if (ret == ERROR_FILE_NOT_FOUND) {
++		aumid_key = NULL;
++		ret = RegCreateKeyExW(aumid_root, aumid, 0, NULL, 0, KEY_WRITE, NULL, &aumid_key, NULL);
++		if (ret != ERROR_SUCCESS) {
++			gchar *error_string = get_error_from_system();
++			gchar *key_string = g_utf16_to_utf8(aumid, -1, NULL, NULL, NULL);
++			log_error("[WTLC] RegCreateKeyExW HKCU\\Software\\Classes\\AppUserModelId\\%s error: %s\n", key_string, error_string);
++			g_free(key_string);
++			g_free(error_string);
++			RegCloseKey(aumid_key);
++			RegCloseKey(aumid_root);
++			return FALSE;
++		}
++	} else if (ret != ERROR_SUCCESS) {
++		gchar *error_string = get_error_from_system();
++		gchar *key_string = g_utf16_to_utf8(aumid, -1, NULL, NULL, NULL);
++		log_error("[WTLC] RegOpenKeyExW HKCU\\Software\\Classes\\AppUserModelId\\%s error: %s\n", key_string, error_string);
++		g_free(key_string);
++		g_free(error_string);
++		RegCloseKey(aumid_root);
++		return FALSE;
++	}
++
++	RegSetValueExW(aumid_key, L"DisplayName", 0, REG_SZ, (LPBYTE)display_name, (wcslen(display_name) + 1) * sizeof(wchar_t));
++	RegSetValueExW(aumid_key, L"IconUri", 0, REG_SZ, (LPBYTE)icon_uri, (wcslen(icon_uri) + 1) * sizeof(wchar_t));
++
++	RegCloseKey(aumid_key);
++	RegCloseKey(aumid_root);
++	return TRUE;
++}
++
++static LPCWSTR prepare_aumid(void)
++{
++	LPCWSTR aumid = L"jp.sraoss.sylpheed.toast";
++	LPCWSTR fallback_aumid = L"Microsoft.Windows.Explorer";
++	LPCWSTR display_name = L"Sylpheed";
++	wchar_t *icon = NULL;
++
++	if (shortcut_aumid_required()) {
++		gchar *aumid_buf = g_utf16_to_utf8(fallback_aumid, -1, NULL, NULL, NULL);
++		debug_print("[WTLC] AUMID: %s\n", aumid_buf);
++		g_free(aumid_buf);
++		return fallback_aumid;
++	}
++
++	icon = find_icon_path();
++	if (icon) {
++		BOOL register_result = register_basic_aumid(aumid, display_name, icon);
++		g_free(icon);
++		if (register_result) {
++			gchar *aumid_buf = g_utf16_to_utf8(aumid, -1, NULL, NULL, NULL);
++			debug_print("[WTLC] AUMID: %s\n", aumid_buf);
++			g_free(aumid_buf);
++			return aumid;
++		}
++	}
++
++	if (!valid_aumid_required()) {
++		gchar *aumid_buf = g_utf16_to_utf8(display_name, -1, NULL, NULL, NULL);
++		debug_print("[WTLC] AUMID: %s\n", aumid_buf);
++		g_free(aumid_buf);
++		return display_name;
++	}
++
++	gchar *aumid_buf = g_utf16_to_utf8(fallback_aumid, -1, NULL, NULL, NULL);
++	debug_print("[WTLC] AUMID: %s\n", aumid_buf);
++	g_free(aumid_buf);
++	return fallback_aumid;
++}
++
++static gint notification_window_open_wtlc(const gchar *message, const gchar *submessage, guint timeout)
++{
++	gdk_threads_enter();
++	if (!wtlc_coinitialized) {
++		debug_print("[WTLC] CoInitializeEx\n");
++		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
++		wtlc_coinitialized = TRUE;
++	}
++	if (!wtlc_instance) {
++		WTLC_Error error = WTLC_Error_NoError;
++		debug_print("[WTLC] WTLC_Instance_Create\n");
++		wtlc_instance = WTLC_Instance_Create();
++		WTLC_setAppName(wtlc_instance, L"Example");
++		WTLC_setAppUserModelId(wtlc_instance, prepare_aumid());
++		WTLC_setShortcutPolicy(wtlc_instance, WTLC_SHORTCUT_POLICY_IGNORE);
++		if (!WTLC_initialize(wtlc_instance, &error)) {
++			gchar *error_string = g_utf16_to_utf8(WTLC_strerror(error), -1, NULL, NULL, NULL);
++			log_error("[WTLC] WTLC_initialize error: %s\n", error_string);
++			g_free(error_string);
++			wtlc_failed_earlier = TRUE;
++			gdk_threads_leave();
++			return 0;
++		}
++	}
++	if (!wtlc_templ) {
++		wchar_t *icon = find_icon_path();
++		debug_print("[WTLC] WTLC_Template_Create\n");
++		if (icon) {
++			wtlc_templ = WTLC_Template_Create(WTLC_TemplateType_ImageAndText02);
++			WTLC_Template_setImagePath(wtlc_templ, icon);
++			g_free(icon);
++		} else {
++			wtlc_templ = WTLC_Template_Create(WTLC_TemplateType_Text02);
++		}
++	}
++	WTLC_Template_setExpiration(wtlc_templ, timeout * 1000);
++	remove_delivered_notification();
++	deliver_notification(message, submessage);
++	gdk_threads_leave();
++	return 0;
++}
++
++static void notification_window_set_message_wtlc(const gchar *message, const gchar *submessage)
++{
++	gdk_threads_enter();
++	remove_delivered_notification();
++	deliver_notification(message, submessage);
++	gdk_threads_leave();
++}
++
++static void notification_window_close_wtlc(void)
++{
++	gdk_threads_enter();
++	remove_delivered_notification();
++	debug_print("[WTLC] WTLC_Template_Destroy\n");
++	WTLC_Template_Destroy(wtlc_templ);
++	debug_print("[WTLC] WTLC_Instance_Destroy\n");
++	WTLC_Instance_Destroy(wtlc_instance);
++	wtlc_templ = NULL;
++	wtlc_instance = NULL;
++	if (wtlc_coinitialized) {
++		debug_print("[WTLC] CoUninitialize\n");
++		CoUninitialize();
++		wtlc_coinitialized = FALSE;
++	}
++	wtlc_icon_searched = FALSE;
++	if (wtlc_icon_path) {
++		debug_print("[WTLC] g_free(wtlc_icon_path)\n");
++		g_free(wtlc_icon_path);
++	}
++	gdk_threads_leave();
++}
++
++static BOOL use_wtlc(void)
++{
++	return !wtlc_failed_earlier && WTLC_isCompatible();
++}
++
++gint notification_window_open_generic(const gchar *message, const gchar *submessage, guint timeout);
++void notification_window_set_message_generic(const gchar *message, const gchar *submessage);
++void notification_window_close_generic(void);
++
++gint notification_window_open(const gchar *message, const gchar *submessage, guint timeout)
++{
++	if (use_wtlc())
++		return notification_window_open_wtlc(message, submessage, timeout);
++	return notification_window_open_generic(message, submessage, timeout);
++}
++
++void notification_window_set_message(const gchar *message, const gchar *submessage)
++{
++	if (use_wtlc())
++		notification_window_set_message_wtlc(message, submessage);
++	notification_window_set_message_generic(message, submessage);
++}
++
++void notification_window_close(void)
++{
++	if (use_wtlc())
++		notification_window_close_wtlc();
++	notification_window_close_generic();
++}
++
++#define notification_window_open		notification_window_open_generic
++#define notification_window_set_message		notification_window_set_message_generic
++#define notification_window_close		notification_window_close_generic
++
++#endif
++
+ #define NOTIFICATIONWINDOW_NOTIFY_PERIOD	10000
+ #define NOTIFICATIONWINDOW_WIDTH		380
+ #define NOTIFICATIONWINDOW_HEIGHT		80
+-- 
+1.7.9
+

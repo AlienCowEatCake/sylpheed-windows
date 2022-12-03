@@ -56,6 +56,7 @@ pacman -S --needed --noconfirm \
     libtool \
     libgpgme-devel \
     zip \
+    unzip \
     ${MSYSTEM_PKG_PREFIX}-toolchain \
     ${MSYSTEM_PKG_PREFIX}-gtk2 \
     ${MSYSTEM_PKG_PREFIX}-curl-winssl \
@@ -94,6 +95,16 @@ find "${SOURCE_DIR}/patches/compface-1.5.2" -name '*.patch' | sort | while IFS= 
 ./configure --prefix="${DIST_PREFIX}"
 make -j4
 make install
+cd ..
+
+# @note --tls-max 1.2: https://github.com/curl/curl/issues/9431
+curl --tls-max 1.2 -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.2/wintoastlibc_${VCVARS_ARCH##*_}.zip"
+unzip "wintoastlibc_${VCVARS_ARCH##*_}.zip"
+cd "$(echo "wintoastlibc_${VCVARS_ARCH##*_}.zip" | sed 's|\.zip$||')"
+cp -a *.h "${DIST_PREFIX}/include/"
+cp -a *.dll "${DIST_PREFIX}/bin/"
+gendef "wintoastlibc.dll"
+dlltool.exe -d "wintoastlibc.def" -D "wintoastlibc.dll" -l "${DIST_PREFIX}/lib/libwintoastlibc.dll.a"
 cd ..
 
 curl -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.bz2
