@@ -1,7 +1,7 @@
-From ed813310aa8a1c86262c3345f46a8016ad149532 Mon Sep 17 00:00:00 2001
+From b18096ba2eb8fd97dd35b75dd04583f3f72dc4ff Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Wed, 30 Nov 2022 16:55:29 +0700
-Subject: [PATCH 09/10] Fix WSAAPI calling conventions
+Subject: [PATCH 8/9] Fix WSAAPI calling conventions
 
 ---
  libsylph/socket.c |    7 +++++--
