@@ -113,6 +113,8 @@ autogenSylpheed
     CFLAGS=-O3 \
     CPPFLAGS="-I${DIST_PREFIX}/include" \
     LDFLAGS="-L${DIST_PREFIX}/lib"
+echo -e '\n#include <openssl/applink.c>\n' >> "src/main.c"
+echo -e '\n#include <openssl/applink.c>\n' >> "src/syl-auth-helper.c"
 make -j4
 make install-strip
 (cd plugin/attachment_tool; make install-plugin)
