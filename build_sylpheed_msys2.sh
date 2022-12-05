@@ -188,6 +188,7 @@ find "${SOURCE_DIR}/patches_sylfilter" -name '*.patch' | sort | while IFS= read 
     CFLAGS=-O3 \
     CPPFLAGS="-I${DIST_PREFIX}/include -I${DIST_PREFIX}/include/sylpheed" \
     LDFLAGS="-L${DIST_PREFIX}/lib"
+echo -e '\n#include <openssl/applink.c>\n' >> "src/sylfilter.c"
 gcc -O3 -DNDEBUG \
     lib/*.c lib/filters/*.c src/*.c \
     -I. -I./lib -I./lib/filters -I${DIST_PREFIX}/include/sylpheed -lsylph-0 \
