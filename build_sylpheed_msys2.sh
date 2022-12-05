@@ -38,12 +38,12 @@ elif [ "${MSYSTEM}" == "CLANG64" ] ; then
     CRT_ARCH="x64"
     UCRT_ARCH="x64"
     NSIS_ARCH="x64"
-# elif [ "${MSYSTEM}" == "CLANGARM64" ] ; then
-#     MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-clang-aarch64"
-#     VCVARS_ARCH="x64_arm64"
-#     CRT_ARCH="arm64"
-#     UCRT_ARCH="arm"
-#     NSIS_ARCH=""
+elif [ "${MSYSTEM}" == "CLANGARM64" ] ; then
+    MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-clang-aarch64"
+    VCVARS_ARCH="arm64"
+    CRT_ARCH="arm64"
+    UCRT_ARCH="arm"
+    NSIS_ARCH="x64"
 else
     echo "Unknown or broken MSYSTEM: ${MSYSTEM}"
     exit 1
@@ -57,11 +57,11 @@ pacman -S --needed --noconfirm \
     libgpgme-devel \
     zip \
     unzip \
+    intltool \
     ${MSYSTEM_PKG_PREFIX}-toolchain \
     ${MSYSTEM_PKG_PREFIX}-gtk2 \
     ${MSYSTEM_PKG_PREFIX}-curl-winssl \
     ${MSYSTEM_PKG_PREFIX}-openssl \
-    ${MSYSTEM_PKG_PREFIX}-gtkspell \
     ${MSYSTEM_PKG_PREFIX}-enchant \
     ${MSYSTEM_PKG_PREFIX}-oniguruma \
     ${MSYSTEM_PKG_PREFIX}-libiconv \
@@ -87,6 +87,31 @@ rm -rf "${DIST_PREFIX}"
 rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
+
+curl -LO https://gtkspell.sourceforge.io/download/gtkspell-2.0.16.tar.gz
+tar -xvpf gtkspell-2.0.16.tar.gz
+cd gtkspell-2.0.16
+find "${SOURCE_DIR}/patches/gtkspell-2.0.16" \( -name '*.patch' -o -name '*.diff' \) | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
+./configure --prefix="${DIST_PREFIX}" --enable-shared --disable-static
+make -j4
+make install
+rm -rf "${DIST_PREFIX}/share/gtk-doc"
+if [ -f "${DIST_PREFIX}/lib/libgtkspell.a" ] ; then
+    mkdir temp
+    cd temp
+    ar x "${DIST_PREFIX}/lib/libgtkspell.a"
+    gcc -shared -o libgtkspell-0.dll \
+        -Wl,--out-implib=libgtkspell.dll.a \
+        -Wl,--export-all-symbols -Wl,--enable-auto-import \
+        -Wl,--whole-archive *.o -Wl,--no-whole-archive \
+        $(pkgconf --libs gtk+-2.0) $(pkgconf --libs enchant-2)
+    rm -rf "${DIST_PREFIX}/lib/libgtkspell.a" "${DIST_PREFIX}/lib/libgtkspell.la"
+    mkdir -p "${DIST_PREFIX}/bin/"
+    mv "libgtkspell.dll.a" "${DIST_PREFIX}/lib/"
+    mv "libgtkspell-0.dll" "${DIST_PREFIX}/bin/"
+    cd ..
+fi
+cd ..
 
 curl -LO http://ftp.xemacs.org/pub/xemacs/aux/compface-1.5.2.tar.gz
 tar -xvpf compface-1.5.2.tar.gz
@@ -130,32 +155,44 @@ make -j4
 make install-strip
 (cd plugin/attachment_tool; make install-plugin)
 strip "${DIST_PREFIX}/lib/sylpheed/plugins/attachment_tool.dll"
+# (cd plugin/test; make install-plugin)
+# strip "${DIST_PREFIX}/lib/sylpheed/plugins/test.dll"
 cd ..
 
 curl -LO http://fallabs.com/qdbm/qdbm-1.8.78.tar.gz
 tar -xvpf qdbm-1.8.78.tar.gz
 cd qdbm-1.8.78
 ./configure --prefix="${DIST_PREFIX}" --enable-stable --enable-pthread --enable-zlib --enable-iconv
-make -j4 libqdbm.a
-make install-strip || mkdir -p "${DIST_PREFIX}/lib/pkgconfig" && cat << EOF > "${DIST_PREFIX}/lib/pkgconfig/qdbm.pc"
+for i in $(cat Makefile.in | grep -E '^MYLIBOBJS = ' | sed 's|MYLIBOBJS = || ; s|\.o||g') ; do
+    gcc -c -O3 -DQDBM_STATIC -I. -DMYPTHREAD -DMYZLIB -DMYICONV -DNDEBUG -fPIC "${i}.c" -o "${i}.o"
+done
+ar rcs "${DIST_PREFIX}/lib/libqdbm.a" *.o
+for i in $(cat Makefile.in | grep -E '^MYHEADS = ' | sed 's|MYHEADS = ||') ; do
+    cp -a "${i}" "${DIST_PREFIX}/include/"
+done
+mkdir -p "${DIST_PREFIX}/lib/pkgconfig"
+cat << EOF > "${DIST_PREFIX}/lib/pkgconfig/qdbm.pc"
 Name: QDBM
 Description: a high performance embedded database library
 Version: 1.8.78
-Libs: -L${DIST_PREFIX}/lib -lqdbm -lz -lpthread -liconv
-Cflags: -I${DIST_PREFIX}/include
+Libs: -L${DIST_PREFIX}/lib ${DIST_PREFIX}/lib/libqdbm.a -lz -lpthread -liconv
+Cflags: -I${DIST_PREFIX}/include -DQDBM_STATIC
 EOF
 cd ..
 
 curl -LO http://sylpheed.sraoss.jp/sylfilter/src/sylfilter-0.8.tar.gz
 tar -xvpf sylfilter-0.8.tar.gz
 cd sylfilter-0.8
-# find "${SOURCE_DIR}/patches_sylfilter" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
+find "${SOURCE_DIR}/patches_sylfilter" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
 ./configure --prefix="${DIST_PREFIX}" --enable-shared --disable-static --disable-sqlite --enable-qdbm --disable-gdbm --with-libsylph=sylpheed \
     CFLAGS=-O3 \
     CPPFLAGS="-I${DIST_PREFIX}/include -I${DIST_PREFIX}/include/sylpheed" \
     LDFLAGS="-L${DIST_PREFIX}/lib"
-make -j4
-make install-strip
+gcc -O3 -DNDEBUG \
+    lib/*.c lib/filters/*.c src/*.c \
+    -I. -I./lib -I./lib/filters -I${DIST_PREFIX}/include/sylpheed -lsylph-0 \
+    $(pkg-config --cflags glib-2.0 qdbm) $(pkg-config --libs glib-2.0 qdbm) \
+    -o "${DIST_PREFIX}/bin/sylfilter"
 cd ..
 
 g++ -O3 -std=c++14 -shared -fPIC -o "${DIST_PREFIX}/bin/libenchant-2.dll" -Wall \

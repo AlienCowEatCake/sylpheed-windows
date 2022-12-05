@@ -6,7 +6,8 @@ Sylpheed is a free software distributed under the [GNU GPL](https://www.gnu.org/
 
 ## About Sylpheed for Windows
 This project provides unofficial builds of Sylpheed with updated libraries and toolchain:
-* Support for native 64-bit 
+* Support for native 64-bit
+* Support for native ARM64 (experimental)
 * Support for spell checking (Windows 8+)
 * Support for native Windows toast notifications (Windows 8+)
 * Support for color emoji and other features of modern unicode
