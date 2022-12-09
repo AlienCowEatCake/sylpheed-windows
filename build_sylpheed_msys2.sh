@@ -62,7 +62,6 @@ pacman -S --needed --noconfirm \
     ${MSYSTEM_PKG_PREFIX}-gtk2 \
     ${MSYSTEM_PKG_PREFIX}-curl-winssl \
     ${MSYSTEM_PKG_PREFIX}-openssl \
-    ${MSYSTEM_PKG_PREFIX}-enchant \
     ${MSYSTEM_PKG_PREFIX}-oniguruma \
     ${MSYSTEM_PKG_PREFIX}-libiconv \
     ${MSYSTEM_PKG_PREFIX}-ca-certificates \
@@ -75,18 +74,38 @@ function autogenSylpheed {
         && libtoolize --force --copy \
         && autoheader \
         && ${AUTOMAKE} --add-missing --foreign --copy \
-        && autoconf
+        && autoconf \
+        && ./configure "${@}"
 }
 
 DIST_PREFIX="${PWD}/sylpheed-3.8.0beta1-${MSYSTEM,,?}"
+rm -rf "${DIST_PREFIX}"
+mkdir -p "${DIST_PREFIX}/lib/pkgconfig" "${DIST_PREFIX}/include" "${DIST_PREFIX}/bin"
 export LD_LIBRARY_PATH="${DIST_PREFIX}/lib"
 export PKG_CONFIG_PATH="${DIST_PREFIX}/lib/pkgconfig"
 
 BUILD_DIR="${PWD}/build_${MSYSTEM}"
-rm -rf "${DIST_PREFIX}"
 rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
+
+g++ -O3 -std=c++14 -shared -fPIC -o "${DIST_PREFIX}/bin/libenchant-2.dll" -Wall \
+    -Wl,--out-implib="${DIST_PREFIX}/lib/libenchant-2.dll.a" \
+    -Wl,--export-all-symbols -Wl,--enable-auto-import \
+    -Wl,--whole-archive "${SOURCE_DIR}/enchant/enchant.cpp" -Wl,--no-whole-archive \
+    -DNDEBUG -lole32 -s
+mkdir -p "${DIST_PREFIX}/include/enchant-2"
+cp -a "${SOURCE_DIR}/enchant/enchant.h" "${DIST_PREFIX}/include/enchant-2/"
+cat << EOF > "${DIST_PREFIX}/lib/pkgconfig/enchant-2.pc"
+prefix=${DIST_PREFIX}
+libdir=\${prefix}/lib
+includedir=\${prefix}/include
+Name: libenchant
+Description: A spell checking library
+Version: 2.3.3
+Libs: -L\${libdir} -lenchant-2
+Cflags: -I\${includedir}/enchant-2
+EOF
 
 curl -LO https://gtkspell.sourceforge.io/download/gtkspell-2.0.16.tar.gz
 tar -xvpf gtkspell-2.0.16.tar.gz
@@ -100,15 +119,12 @@ if [ -f "${DIST_PREFIX}/lib/libgtkspell.a" ] ; then
     mkdir temp
     cd temp
     ar x "${DIST_PREFIX}/lib/libgtkspell.a"
-    gcc -shared -o libgtkspell-0.dll \
-        -Wl,--out-implib=libgtkspell.dll.a \
+    gcc -shared -o "${DIST_PREFIX}/bin/libgtkspell-0.dll" \
+        -Wl,--out-implib="${DIST_PREFIX}/lib/libgtkspell.dll.a" \
         -Wl,--export-all-symbols -Wl,--enable-auto-import \
         -Wl,--whole-archive *.o -Wl,--no-whole-archive \
         $(pkgconf --libs gtk+-2.0) $(pkgconf --libs enchant-2)
     rm -rf "${DIST_PREFIX}/lib/libgtkspell.a" "${DIST_PREFIX}/lib/libgtkspell.la"
-    mkdir -p "${DIST_PREFIX}/bin/"
-    mv "libgtkspell.dll.a" "${DIST_PREFIX}/lib/"
-    mv "libgtkspell-0.dll" "${DIST_PREFIX}/bin/"
     cd ..
 fi
 cd ..
@@ -136,8 +152,8 @@ curl -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.bz
 tar -xvpf sylpheed-3.8.0beta1.tar.bz2
 cd sylpheed-3.8.0beta1
 find "${SOURCE_DIR}/patches_sylpheed" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
-autogenSylpheed
-./configure --prefix="${DIST_PREFIX}" \
+autogenSylpheed \
+    --prefix="${DIST_PREFIX}" \
     --with-localedir=share/locale \
     --with-themedir=share/icons \
     --enable-oniguruma --enable-threads \
@@ -170,7 +186,6 @@ ar rcs "${DIST_PREFIX}/lib/libqdbm.a" *.o
 for i in $(cat Makefile.in | grep -E '^MYHEADS = ' | sed 's|MYHEADS = ||') ; do
     cp -a "${i}" "${DIST_PREFIX}/include/"
 done
-mkdir -p "${DIST_PREFIX}/lib/pkgconfig"
 cat << EOF > "${DIST_PREFIX}/lib/pkgconfig/qdbm.pc"
 Name: QDBM
 Description: a high performance embedded database library
@@ -195,11 +210,6 @@ gcc -O3 -DNDEBUG \
     $(pkg-config --cflags glib-2.0 qdbm) $(pkg-config --libs glib-2.0 qdbm) \
     -o "${DIST_PREFIX}/bin/sylfilter"
 cd ..
-
-g++ -O3 -std=c++14 -shared -fPIC -o "${DIST_PREFIX}/bin/libenchant-2.dll" -Wall \
-    -Wl,--export-all-symbols -Wl,--enable-auto-import \
-    -Wl,--whole-archive "${SOURCE_DIR}/enchant/enchant.cpp" -Wl,--no-whole-archive \
-    -DNDEBUG -lole32 -s
 
 curl -Lo libwab-master.tar.gz https://github.com/pboettch/libwab/archive/refs/heads/master.tar.gz
 tar -xvpf libwab-master.tar.gz
@@ -317,9 +327,11 @@ cp -a "${SOURCE_DIR}/misc/README-win32-ja.txt" "${DIST_PREFIX}/"
 cp -a "${SOURCE_DIR}/misc/README-win32.txt" "${DIST_PREFIX}/"
 cp -a "${SOURCE_DIR}/misc/sample-sylpheed.ini" "${DIST_PREFIX}/"
 base64 -d "${SOURCE_DIR}/misc/oauth2.ini.b64" > "${DIST_PREFIX}/oauth2.ini"
-find "${DIST_PREFIX}/share/locale" -mindepth 1 -maxdepth 1 -type d | while IFS= read -r item ; do
-    loc="${item##*/}"
-    cp -a "${MSYSTEM_PREFIX}/share/locale/${loc}/LC_MESSAGES/gtk20.mo" "${DIST_PREFIX}/share/locale/${loc}/LC_MESSAGES/" || true
+find "${MSYSTEM_PREFIX}/share/locale/" -type f -name 'gtk20.mo' | while IFS= read -r item ; do
+    loc="${item%/LC_MESSAGES/*}"
+    loc="${loc##*/}"
+    mkdir -p "${DIST_PREFIX}/share/locale/${loc}/LC_MESSAGES/"
+    cp -a "${item}" "${DIST_PREFIX}/share/locale/${loc}/LC_MESSAGES/"
 done
 cd sylpheed-3.8.0beta1
 cp -a "sylpheed.png" "sylpheed-64x64.png" "sylpheed-128x128.png" "${DIST_PREFIX}/"
