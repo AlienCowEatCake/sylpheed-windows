@@ -226,6 +226,34 @@ cp -a bsfilter/bsfilter bsfilter/bsfilterw.exe "${DIST_PREFIX}/bin/"
 cp -a htdocs "${DIST_PREFIX}/share/sylpheed/bsfilter"
 cd ..
 
+SYL_PF_COMMIT=e62f59ebfbf9ffb8c74d9f07f32d19bf35fbf4b1
+curl -Lo sylpheed-plugin-factory-${SYL_PF_COMMIT}.tar.gz https://github.com/kenhys/sylpheed-plugin-factory/archive/${SYL_PF_COMMIT}.tar.gz
+tar -xvpf sylpheed-plugin-factory-${SYL_PF_COMMIT}.tar.gz
+cd sylpheed-plugin-factory-${SYL_PF_COMMIT}
+echo > m4/compiler_flag.m4
+echo "${SYL_PF_COMMIT:0:7}" > version
+./autogen.sh
+./configure --prefix="${DIST_PREFIX}" --enable-shared --disable-static --with-pic \
+    --with-sylpheed-build-dir="${BUILD_DIR}/sylpheed-3.8.0beta1" \
+    --with-sylpheed-plugin-dir="${DIST_PREFIX}/lib/sylpheed/plugins"
+make -j4
+make install
+cd ..
+
+SYL_HTMLVIEW_COMMIT=e3a6dbfeff2791f8194aac340cf97ba70fee958f
+curl -Lo sylpheed-htmlview-${SYL_HTMLVIEW_COMMIT}.tar.gz https://github.com/kenhys/sylpheed-htmlview/archive/${SYL_HTMLVIEW_COMMIT}.tar.gz
+tar -xvpf sylpheed-htmlview-${SYL_HTMLVIEW_COMMIT}.tar.gz
+cd sylpheed-htmlview-${SYL_HTMLVIEW_COMMIT}
+./autogen.sh
+./configure --prefix="${DIST_PREFIX}" --enable-shared --disable-static --with-pic \
+    --with-sylpheed-build-dir="${BUILD_DIR}/sylpheed-3.8.0beta1" \
+    --with-sylplugin-factory-source-dir="${BUILD_DIR}/sylpheed-plugin-factory-${SYL_PF_COMMIT}" \
+    --with-sylpheed-plugin-dir="${DIST_PREFIX}/lib/sylpheed/plugins" \
+    --enable-webkitgtk --disable-gtkhtml
+# make -j4
+# make install
+cd ..
+
 rm -rf "${DIST_PREFIX}/bin/compface.exe" "${DIST_PREFIX}/bin/uncompface.exe"
 mv "${DIST_PREFIX}/bin/"* "${DIST_PREFIX}/"
 cp -a "${DIST_PREFIX}/sylfilter.exe" "${DIST_PREFIX}/sylfilter-cui.exe"
