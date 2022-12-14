@@ -82,11 +82,12 @@ static std::string wstring_to_utf8(const std::wstring &wstr)
 struct str_enchant_broker
 {
     ISpellCheckerFactory *factory;
+    HRESULT init_result;
 
     str_enchant_broker()
         : factory(NULL)
     {
-        CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+        init_result = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
         if(FAILED(CoCreateInstance(__uuidof(SpellCheckerFactory), NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory))))
             factory = NULL;
     }
@@ -95,7 +96,8 @@ struct str_enchant_broker
     {
         if(factory)
             factory->Release();
-        CoUninitialize();
+        if(init_result == S_OK || init_result == S_FALSE)
+            CoUninitialize();
     }
 };
 
