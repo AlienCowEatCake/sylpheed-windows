@@ -1,7 +1,7 @@
 From 082d00d662c0fe74380ba4979fbe43d53d845b16 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Sun, 4 Dec 2022 03:28:39 +0700
-Subject: [PATCH 10/10] Use native Windows toast notifications
+Subject: [PATCH 10/11] Use native Windows toast notifications
 
 ---
  configure.ac             |   35 ++++

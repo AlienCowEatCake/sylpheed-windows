@@ -1,7 +1,7 @@
 From 3de343563292c031a72058941a09f01067d69a49 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Wed, 30 Nov 2022 23:25:30 +0700
-Subject: [PATCH 09/10] Fixes for modern NSIS
+Subject: [PATCH 09/11] Fixes for modern NSIS
 
 ---
  nsis/japanese.nsh             |  122 ++++++++++++++++++++--------------------

@@ -1,7 +1,7 @@
 From 803be375c9676ae4c8f9399872cb9cc3539cb70a Mon Sep 17 00:00:00 2001
 From: Darren Salt <linux@youmustbejoking.demon.co.uk>
 Date: Sun, 28 Jan 2018 18:20:19 +0900
-Subject: [PATCH 02/10] escape '^From ' lines for not breaking GPG MIME
+Subject: [PATCH 02/11] escape '^From ' lines for not breaking GPG MIME
  signatures
 
 ---

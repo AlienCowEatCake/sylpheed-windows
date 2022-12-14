@@ -1,7 +1,7 @@
 From 33cee7f742cb592b29055732286c2e8db41c171a Mon Sep 17 00:00:00 2001
 From: Ricardo Mones <mones@debian.org>
 Date: Tue, 20 Sep 2022 20:33:17 +0700
-Subject: [PATCH 05/10] fix typo in import.c file
+Subject: [PATCH 05/11] fix typo in import.c file
 
 ---
  src/import.c |    2 +-

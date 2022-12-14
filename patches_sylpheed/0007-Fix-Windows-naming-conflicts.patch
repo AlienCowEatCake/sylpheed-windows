@@ -1,7 +1,7 @@
 From 963f0b8e19d40d4e7f5e4545573f8d6907a51903 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Mon, 28 Nov 2022 23:09:20 +0700
-Subject: [PATCH 07/10] Fix Windows naming conflicts
+Subject: [PATCH 07/11] Fix Windows naming conflicts
 
 ---
  src/filesel.c    |   12 ++++++++++++
