@@ -1,12 +1,12 @@
-From 082d00d662c0fe74380ba4979fbe43d53d845b16 Mon Sep 17 00:00:00 2001
+From 2710e2273ca6888bef56b59cf076ca2ab3577305 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Sun, 4 Dec 2022 03:28:39 +0700
 Subject: [PATCH 10/11] Use native Windows toast notifications
 
 ---
  configure.ac             |   35 ++++
- src/notificationwindow.c |  394 ++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 429 insertions(+), 0 deletions(-)
+ src/notificationwindow.c |  396 ++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 431 insertions(+), 0 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
 index 2a0c2c9..057d506 100644
@@ -62,10 +62,10 @@ index 2a0c2c9..057d506 100644
  echo "libcurl       : $ac_cv_enable_libcurl"
  echo ""
 diff --git a/src/notificationwindow.c b/src/notificationwindow.c
-index 966c708..07ec6fa 100644
+index 966c708..a884dd4 100644
 --- a/src/notificationwindow.c
 +++ b/src/notificationwindow.c
-@@ -29,11 +29,405 @@
+@@ -29,11 +29,407 @@
  #  include <windows.h>
  #endif
  
@@ -81,6 +81,7 @@ index 966c708..07ec6fa 100644
 +#ifdef USE_WINTOASTLIBC
 +
 +static BOOL wtlc_coinitialized = FALSE;
++static HRESULT wtlc_coinitialize_result = S_OK;
 +static BOOL wtlc_failed_earlier = FALSE;
 +static BOOL wtlc_icon_searched = FALSE;
 +static gchar *wtlc_icon_path = NULL;
@@ -364,7 +365,7 @@ index 966c708..07ec6fa 100644
 +	gdk_threads_enter();
 +	if (!wtlc_coinitialized) {
 +		debug_print("[WTLC] CoInitializeEx\n");
-+		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
++		wtlc_coinitialize_result = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 +		wtlc_coinitialized = TRUE;
 +	}
 +	if (!wtlc_instance) {
@@ -421,7 +422,8 @@ index 966c708..07ec6fa 100644
 +	wtlc_instance = NULL;
 +	if (wtlc_coinitialized) {
 +		debug_print("[WTLC] CoUninitialize\n");
-+		CoUninitialize();
++		if (wtlc_coinitialize_result == S_OK || wtlc_coinitialize_result == S_FALSE)
++			CoUninitialize();
 +		wtlc_coinitialized = FALSE;
 +	}
 +	wtlc_icon_searched = FALSE;
