@@ -6,7 +6,7 @@ CONFIG -= qt
 SOURCES += \
         main.cpp
 
-INCLUDEPATH += C:\Users\Peter\Desktop\B\sylpheed-3.8.0beta1-ucrt64\include\webkitgtk-1.0
+INCLUDEPATH += $${PWD}\webkitgtk-1.0
 INCLUDEPATH += C:\msys64\ucrt64\include\glib-2.0
 INCLUDEPATH += C:\msys64\ucrt64\lib\glib-2.0\include
 INCLUDEPATH += C:\msys64\ucrt64\include\gtk-2.0

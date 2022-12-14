@@ -42,6 +42,8 @@ webkit_web_view_load_string                     (WebKitWebView        *web_view,
 // https://cgit.freedesktop.org/spice/spice-gtk/commit/?id=fdd80e5ed4002f94d3e31c9a76426b49823ea7e5
 // https://cpp.hotexamples.com/examples/-/-/GDK_WINDOW_HWND/cpp-gdk_window_hwnd-function-examples.html
 // https://zetcode.com/gui/gtk2/customwidget/
+// (!) https://gstreamer.freedesktop.org/documentation/video/gstvideooverlay.html?gi-language=c#gstvideooverlay-and-gtk
+// (!) https://www.opennet.ru/docs/RUS/gobject_api/howto-interface-properties.html
 
 int main()
 {
