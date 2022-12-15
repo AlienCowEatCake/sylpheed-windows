@@ -65,7 +65,8 @@ pacman -S --needed --noconfirm \
     ${MSYSTEM_PKG_PREFIX}-oniguruma \
     ${MSYSTEM_PKG_PREFIX}-libiconv \
     ${MSYSTEM_PKG_PREFIX}-ca-certificates \
-    ${MSYSTEM_PKG_PREFIX}-gpgme
+    ${MSYSTEM_PKG_PREFIX}-gpgme \
+    ${MSYSTEM_PKG_PREFIX}-sqlite3
 
 function autogenSylpheed {
     local ACLOCAL=aclocal-1.15
@@ -199,7 +200,7 @@ curl -LO http://sylpheed.sraoss.jp/sylfilter/src/sylfilter-0.8.tar.gz
 tar -xvpf sylfilter-0.8.tar.gz
 cd sylfilter-0.8
 find "${SOURCE_DIR}/patches_sylfilter" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
-./configure --prefix="${DIST_PREFIX}" --enable-shared --disable-static --disable-sqlite --enable-qdbm --disable-gdbm --with-libsylph=sylpheed \
+./configure --prefix="${DIST_PREFIX}" --enable-shared --disable-static --enable-sqlite --enable-qdbm --disable-gdbm --with-libsylph=sylpheed \
     CFLAGS=-O3 \
     CPPFLAGS="-I${DIST_PREFIX}/include -I${DIST_PREFIX}/include/sylpheed" \
     LDFLAGS="-L${DIST_PREFIX}/lib"
@@ -207,7 +208,7 @@ echo -e '\n#include <openssl/applink.c>\n' >> "src/sylfilter.c"
 gcc -O3 -DNDEBUG \
     lib/*.c lib/filters/*.c src/*.c \
     -I. -I./lib -I./lib/filters -I${DIST_PREFIX}/include/sylpheed -lsylph-0 \
-    $(pkg-config --cflags glib-2.0 qdbm) $(pkg-config --libs glib-2.0 qdbm) \
+    $(pkg-config --cflags glib-2.0 qdbm sqlite3) $(pkg-config --libs glib-2.0 qdbm sqlite3) \
     -o "${DIST_PREFIX}/bin/sylfilter"
 cd ..
 
