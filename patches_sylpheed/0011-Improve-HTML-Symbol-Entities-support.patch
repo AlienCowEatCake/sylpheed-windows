@@ -1,4 +1,4 @@
-From a595d4b35446a108b5be606393ec86d38c370899 Mon Sep 17 00:00:00 2001
+From a21d2db1dabd0bbda3919e7b38dde871e65ac063 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Thu, 15 Dec 2022 01:19:45 +0700
 Subject: [PATCH 11/11] Improve HTML Symbol Entities support
@@ -54,11 +54,11 @@ with open('html5.txt', 'r') as f:
 
 print("MAX LENGTH ENTITY: ", maxlen)
 ---
- libsylph/html.c | 3004 ++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 files changed, 2990 insertions(+), 14 deletions(-)
+ libsylph/html.c | 3008 ++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 2992 insertions(+), 16 deletions(-)
 
 diff --git a/libsylph/html.c b/libsylph/html.c
-index a86c07b..98246fa 100644
+index a86c07b..6e0426d 100644
 --- a/libsylph/html.c
 +++ b/libsylph/html.c
 @@ -28,6 +28,7 @@
@@ -3000,6 +3000,15 @@ index a86c07b..98246fa 100644
  		SYMBOL_TABLE_ADD(default_symbol_table, symbol_list);
  		SYMBOL_TABLE_ADD(default_symbol_table, latin_symbol_list);
  		SYMBOL_TABLE_ADD(default_symbol_table, other_symbol_list);
+@@ -632,7 +3550,7 @@ static HTMLState html_parse_tag(HTMLParser *parser)
+ 
+ static void html_parse_special(HTMLParser *parser)
+ {
+-	gchar symbol_name[9];
++	gchar symbol_name[MAX_ENTITY_LEN + 1];
+ 	gint n;
+ 	const gchar *val;
+ 
 @@ -642,7 +3560,7 @@ static void html_parse_special(HTMLParser *parser)
  	/* &foo; */
  	for (n = 0; parser->bufp[n] != '\0' && parser->bufp[n] != ';'; n++)
@@ -3064,6 +3073,15 @@ index a86c07b..98246fa 100644
  				html_append_str(parser, buf, len);
  				parser->state = HTML_NORMAL;
  				return;
+@@ -726,7 +3672,7 @@ static void html_get_parenthesis(HTMLParser *parser, gchar *buf, gint len)
+ static gchar *html_unescape_str(HTMLParser *parser, const gchar *str)
+ {
+ 	const gchar *p = str;
+-	gchar symbol_name[9];
++	gchar symbol_name[MAX_ENTITY_LEN + 1];
+ 	gint n;
+ 	const gchar *val;
+ 	gchar *unescape_str;
 @@ -742,7 +3688,7 @@ static gchar *html_unescape_str(HTMLParser *parser, const gchar *str)
  		case '&':
  			for (n = 0; p[n] != '\0' && p[n] != ';'; n++)
