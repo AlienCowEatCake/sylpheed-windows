@@ -99,11 +99,13 @@ mkdir -p "${DIST_PREFIX}/include/enchant-2"
 cp -a "${SOURCE_DIR}/enchant/enchant.h" "${DIST_PREFIX}/include/enchant-2/"
 cat << EOF > "${DIST_PREFIX}/lib/pkgconfig/enchant-2.pc"
 prefix=${DIST_PREFIX}
-libdir=\${prefix}/lib
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
 includedir=\${prefix}/include
+
 Name: libenchant
 Description: A spell checking library
-Version: 2.3.3
+Version: 2.5.0
 Libs: -L\${libdir} -lenchant-2
 Cflags: -I\${includedir}/enchant-2
 EOF
@@ -140,7 +142,7 @@ make install
 cd ..
 
 # @note --tls-max 1.2: https://github.com/curl/curl/issues/9431
-curl --tls-max 1.2 -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.2/wintoastlibc_${VCVARS_ARCH##*_}.zip"
+curl --tls-max 1.2 -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.3/wintoastlibc_${VCVARS_ARCH##*_}.zip"
 unzip "wintoastlibc_${VCVARS_ARCH##*_}.zip"
 cd "$(echo "wintoastlibc_${VCVARS_ARCH##*_}.zip" | sed 's|\.zip$||')"
 cp -a *.h "${DIST_PREFIX}/include/"
