@@ -149,6 +149,12 @@ gendef "wintoastlibc.dll"
 dlltool.exe -d "wintoastlibc.def" -D "wintoastlibc.dll" -l "${DIST_PREFIX}/lib/libwintoastlibc.dll.a"
 cd ..
 
+USE_OPENSSL_APPLINK="true"
+echo -e '#include <openssl/applink.c>\nint main(int argc, char *argv[]){return 0;}' > "test_applink.c"
+gcc "test_applink.c" $(pkg-config --cflags openssl) $(pkg-config --libs openssl) -o "test_applink.exe" >/dev/null 2>/dev/null || USE_OPENSSL_APPLINK="false"
+rm -f "test_applink.c" "test_applink.exe"
+echo -e "\nUSE_OPENSSL_APPLINK=${USE_OPENSSL_APPLINK}\n"
+
 curl -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.bz2
 tar -xvpf sylpheed-3.8.0beta1.tar.bz2
 cd sylpheed-3.8.0beta1
@@ -166,8 +172,10 @@ autogenSylpheed \
     CFLAGS=-O3 \
     CPPFLAGS="-I${DIST_PREFIX}/include" \
     LDFLAGS="-L${DIST_PREFIX}/lib"
-echo -e '\n#include <openssl/applink.c>\n' >> "src/main.c"
-echo -e '\n#include <openssl/applink.c>\n' >> "src/syl-auth-helper.c"
+if "${USE_OPENSSL_APPLINK}" ; then
+    echo -e '\n#include <openssl/applink.c>\n' >> "src/main.c"
+    echo -e '\n#include <openssl/applink.c>\n' >> "src/syl-auth-helper.c"
+fi
 make -j4
 make install-strip
 (cd plugin/attachment_tool; make install-plugin)
@@ -204,7 +212,9 @@ find "${SOURCE_DIR}/patches_sylfilter" -name '*.patch' | sort | while IFS= read 
     CFLAGS=-O3 \
     CPPFLAGS="-I${DIST_PREFIX}/include -I${DIST_PREFIX}/include/sylpheed" \
     LDFLAGS="-L${DIST_PREFIX}/lib"
-echo -e '\n#include <openssl/applink.c>\n' >> "src/sylfilter.c"
+if "${USE_OPENSSL_APPLINK}" ; then
+    echo -e '\n#include <openssl/applink.c>\n' >> "src/sylfilter.c"
+fi
 gcc -O3 -DNDEBUG \
     lib/*.c lib/filters/*.c src/*.c \
     -I. -I./lib -I./lib/filters -I${DIST_PREFIX}/include/sylpheed -lsylph-0 \
@@ -235,13 +245,24 @@ mv "${DIST_PREFIX}/share/sylpheed" "${DIST_PREFIX}/doc"
 rm -rf "${DIST_PREFIX}/bin" "${DIST_PREFIX}/include" "${DIST_PREFIX}/lib/"* "${DIST_PREFIX}/man" "${DIST_PREFIX}/share/applications" "${DIST_PREFIX}/share/pixmaps"
 
 mkdir -p "${DIST_PREFIX}/etc/ssl/certs"
-cp -a "${MSYSTEM_PREFIX}/ssl/certs/ca-bundle.crt" "${DIST_PREFIX}/etc/ssl/certs/certs.crt"
+if [ -f "${MSYSTEM_PREFIX}/etc/ssl/certs/ca-bundle.crt" ] ; then
+    cp -a "${MSYSTEM_PREFIX}/etc/ssl/certs/ca-bundle.crt" "${DIST_PREFIX}/etc/ssl/certs/certs.crt"
+elif [ -f "${MSYSTEM_PREFIX}/ssl/certs/ca-bundle.crt" ] ; then
+    cp -a "${MSYSTEM_PREFIX}/ssl/certs/ca-bundle.crt" "${DIST_PREFIX}/etc/ssl/certs/certs.crt"
+else
+    echo "Can't find certs bundle"
+    exit 1
+fi
 cp -a "${MSYSTEM_PREFIX}/etc/gtk-2.0" "${DIST_PREFIX}/etc/"
 echo 'gtk-theme-name = "MS-Windows"' > "${DIST_PREFIX}/etc/gtk-2.0/gtkrc"
 
 cp -a "${MSYSTEM_PREFIX}/lib/gdk-pixbuf-2.0" "${DIST_PREFIX}/lib/"
 cp -a "${MSYSTEM_PREFIX}/lib/gtk-2.0" "${DIST_PREFIX}/lib/"
-cp -a "${MSYSTEM_PREFIX}/lib/engines-1_1" "${DIST_PREFIX}/lib/"
+if pkg-config --atleast-version 3.0.0 openssl ; then
+    cp -a "${MSYSTEM_PREFIX}/lib/engines-3" "${DIST_PREFIX}/lib/"
+else
+    cp -a "${MSYSTEM_PREFIX}/lib/engines-1_1" "${DIST_PREFIX}/lib/"
+fi
 find "${DIST_PREFIX}" \( -name '*.a' -o -name '*.la' \) -delete
 find "${DIST_PREFIX}" -name 'include' | sort | while IFS= read -r item ; do rm -rf "${item}" ; done
 

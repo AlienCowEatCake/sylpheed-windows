@@ -1,0 +1,66 @@
+From 033e218876162550738da7fe0703837b0cc69116 Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Thu, 1 Jun 2023 18:28:44 +0700
+Subject: [PATCH 12/12] Fix implicit function declarations
+
+---
+ libsylph/socket.h  | 1 +
+ src/main.c         | 4 ++++
+ src/setup.c        | 1 +
+ src/update_check.c | 1 +
+ 4 files changed, 7 insertions(+)
+
+diff --git a/libsylph/socket.h b/libsylph/socket.h
+index 15bcef7..d957eb7 100644
+--- a/libsylph/socket.h
++++ b/libsylph/socket.h
+@@ -146,6 +146,7 @@ gint fd_accept		(gint sock);
+ gint fd_read		(gint sock, gchar *buf, gint len);
+ gint fd_write		(gint sock, const gchar *buf, gint len);
+ gint fd_write_all	(gint sock, const gchar *buf, gint len);
++gint fd_recv		(gint sock, gchar *buf, gint len, gint flags);
+ gint fd_gets		(gint sock, gchar *buf, gint len);
+ gint fd_getline		(gint sock, gchar **line);
+ gint fd_close		(gint sock);
+diff --git a/src/main.c b/src/main.c
+index 77d8192..7a3600f 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -25,6 +25,10 @@
+ 
+ #include <glib.h>
+ #include <glib/gi18n.h>
++#include <gdk/gdk.h>
++#ifdef G_OS_WIN32
++#  include <gdk/gdkwin32.h>
++#endif
+ #include <gtk/gtkmain.h>
+ #include <gtk/gtkrc.h>
+ #include <gtk/gtkstock.h>
+diff --git a/src/setup.c b/src/setup.c
+index c2f4feb..c8e560f 100644
+--- a/src/setup.c
++++ b/src/setup.c
+@@ -43,6 +43,7 @@
+ #include "stock_pixmap.h"
+ #include "account.h"
+ #include "addressbook.h"
++#include "import.h"
+ #if USE_SSL
+ #  include "ssl.h"
+ #endif
+diff --git a/src/update_check.c b/src/update_check.c
+index 4fb8bbd..14182f5 100644
+--- a/src/update_check.c
++++ b/src/update_check.c
+@@ -37,6 +37,7 @@
+ #include "update_check.h"
+ #include "manage_window.h"
+ #include "inc.h"
++#include "main.h"
+ #include "gtkutils.h"
+ #include "alertpanel.h"
+ #include "prefs_common.h"
+-- 
+2.30.2
+
