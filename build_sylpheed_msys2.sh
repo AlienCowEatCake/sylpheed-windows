@@ -113,7 +113,7 @@ tar -xvpf gtkspell-2.0.16.tar.gz
 cd gtkspell-2.0.16
 find "${SOURCE_DIR}/patches/gtkspell-2.0.16" \( -name '*.patch' -o -name '*.diff' \) | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
 ./configure --prefix="${DIST_PREFIX}" --enable-shared --disable-static
-make -j4
+make -j$(getconf _NPROCESSORS_ONLN)
 make install
 rm -rf "${DIST_PREFIX}/share/gtk-doc"
 if [ -f "${DIST_PREFIX}/lib/libgtkspell.a" ] ; then
@@ -135,7 +135,7 @@ tar -xvpf compface-1.5.2.tar.gz
 cd compface-1.5.2
 find "${SOURCE_DIR}/patches/compface-1.5.2" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
 ./configure --prefix="${DIST_PREFIX}"
-make -j4
+make -j$(getconf _NPROCESSORS_ONLN)
 make install
 cd ..
 
@@ -176,7 +176,7 @@ if "${USE_OPENSSL_APPLINK}" ; then
     echo -e '\n#include <openssl/applink.c>\n' >> "src/main.c"
     echo -e '\n#include <openssl/applink.c>\n' >> "src/syl-auth-helper.c"
 fi
-make -j4
+make -j$(getconf _NPROCESSORS_ONLN)
 make install-strip
 (cd plugin/attachment_tool; make install-plugin)
 strip "${DIST_PREFIX}/lib/sylpheed/plugins/attachment_tool.dll"
@@ -306,10 +306,19 @@ function copyDlls() {
     done
 }
 
+function getVCVARSPath() {
+    local VCVARS_HELPER="$(cygpath -w "${SOURCE_DIR}/scripts/find_vcvarsall.bat")"
+    local VCVARS_VER="2022"
+    cat << EOF | cmd | tail -3 | head -1
+call "${VCVARS_HELPER}" ${VCVARS_VER}
+echo %VS${VCVARS_VER}_VCVARSALL%
+EOF
+}
+
 function fixupExes() {
     pushd "${DIST_PREFIX}" > /dev/null
     cat << EOF | cmd
-set VCVARS="C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat"
+set VCVARS="$(getVCVARSPath)"
 call %VCVARS% ${VCVARS_ARCH}
 $(find . -maxdepth 1 \( -name 'curl.exe' -o -name 'sylfilter.exe' \) | sed 's|^\./|editbin /subsystem:windows |')
 EOF
@@ -318,7 +327,7 @@ EOF
 
 function getCRTPath() {
     cat << EOF | cmd | tail -3 | head -1
-set VCVARS="C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat"
+set VCVARS="$(getVCVARSPath)"
 call %VCVARS% ${VCVARS_ARCH}
 echo %VCToolsRedistDir%${CRT_ARCH}\Microsoft.VC143.CRT
 EOF
@@ -326,7 +335,7 @@ EOF
 
 function getUCRTPath() {
     cat << EOF | cmd | tail -3 | head -1
-set VCVARS="C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat"
+set VCVARS="$(getVCVARSPath)"
 call %VCVARS% ${VCVARS_ARCH}
 echo %UniversalCRTSdkDir%Redist\%UCRTVersion%\ucrt\DLLs\\${UCRT_ARCH}
 EOF
