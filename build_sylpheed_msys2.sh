@@ -82,8 +82,9 @@ function autogenSylpheed {
 DIST_PREFIX="${PWD}/sylpheed-3.8.0beta1-${MSYSTEM,,?}"
 rm -rf "${DIST_PREFIX}"
 mkdir -p "${DIST_PREFIX}/lib/pkgconfig" "${DIST_PREFIX}/include" "${DIST_PREFIX}/bin"
-export LD_LIBRARY_PATH="${DIST_PREFIX}/lib"
-export PKG_CONFIG_PATH="${DIST_PREFIX}/lib/pkgconfig"
+export PATH="${DIST_PREFIX}/bin:${PATH}:"
+export LD_LIBRARY_PATH="${DIST_PREFIX}/lib:${LD_LIBRARY_PATH}:"
+export PKG_CONFIG_PATH="${DIST_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}:"
 
 BUILD_DIR="${PWD}/build_${MSYSTEM}"
 rm -rf "${BUILD_DIR}"
@@ -156,6 +157,30 @@ echo -e '#include <openssl/applink.c>\nint main(int argc, char *argv[]){return 0
 gcc "test_applink.c" $(pkg-config --cflags openssl) $(pkg-config --libs openssl) -o "test_applink.exe" >/dev/null 2>/dev/null || USE_OPENSSL_APPLINK="false"
 rm -f "test_applink.c" "test_applink.exe"
 echo -e "\nUSE_OPENSSL_APPLINK=${USE_OPENSSL_APPLINK}\n"
+
+# @note https://github.com/AlienCowEatCake/sylpheed-windows/issues/4
+curl -LO https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-1.20.0.tar.bz2
+tar -xvpf gpgme-1.20.0.tar.bz2
+cd gpgme-1.20.0
+autoreconf -ivf
+DOXYGEN=/usr/bin/doxygen \
+PYTHON=${MINGW_PREFIX}/bin/python3 \
+CFLAGS="${CFLAGS} -O3 -DNDEBUG -Wno-int-conversion -Wno-incompatible-function-pointer-types" \
+./configure \
+    --prefix="${DIST_PREFIX}" \
+    --libexecdir="${DIST_PREFIX}/bin" \
+    --disable-static \
+    --enable-languages='' \
+    --disable-gpgconf-test \
+    --disable-gpg-test \
+    --disable-gpgsm-test \
+    --disable-g13-test \
+    --disable-fd-passing \
+    --disable-w32-glib
+cd src
+make -j$(getconf _NPROCESSORS_ONLN)
+make install-strip
+cd ../..
 
 curl -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.bz2
 tar -xvpf sylpheed-3.8.0beta1.tar.bz2
@@ -239,7 +264,7 @@ cp -a bsfilter/bsfilter bsfilter/bsfilterw.exe "${DIST_PREFIX}/bin/"
 cp -a htdocs "${DIST_PREFIX}/share/sylpheed/bsfilter"
 cd ..
 
-rm -rf "${DIST_PREFIX}/bin/compface.exe" "${DIST_PREFIX}/bin/uncompface.exe"
+rm -rf "${DIST_PREFIX}/bin/compface.exe" "${DIST_PREFIX}/bin/uncompface.exe" "${DIST_PREFIX}/bin/gpgme-config" "${DIST_PREFIX}/bin/gpgme-json.exe" "${DIST_PREFIX}/bin/gpgme-tool.exe"
 mv "${DIST_PREFIX}/bin/"* "${DIST_PREFIX}/"
 cp -a "${DIST_PREFIX}/sylfilter.exe" "${DIST_PREFIX}/sylfilter-cui.exe"
 mv "${DIST_PREFIX}/lib/sylpheed/plugins" "${DIST_PREFIX}/"
@@ -269,7 +294,9 @@ find "${DIST_PREFIX}" \( -name '*.a' -o -name '*.la' \) -delete
 find "${DIST_PREFIX}" -name 'include' | sort | while IFS= read -r item ; do rm -rf "${item}" ; done
 
 cp -a "${MSYSTEM_PREFIX}/bin/curl.exe" "${DIST_PREFIX}/"
-cp -a "${MSYSTEM_PREFIX}/bin/gpgme-w32spawn.exe" "${DIST_PREFIX}/"
+if [ ! -f "${DIST_PREFIX}/gpgme-w32spawn.exe" ] ; then
+    cp -a "${MSYSTEM_PREFIX}/bin/gpgme-w32spawn.exe" "${DIST_PREFIX}/"
+fi
 find "${MSYSTEM_PREFIX}/bin" \( -name "gspawn*helper.exe" -o -name "gspawn*helper-console.exe" \) -exec cp -a \{\} "${DIST_PREFIX}/" \;
 cp -a "${MSYSTEM_PREFIX}/share/themes" "${DIST_PREFIX}/share/"
 
