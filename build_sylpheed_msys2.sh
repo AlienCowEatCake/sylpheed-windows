@@ -187,10 +187,10 @@ cd ../..
 if ! pkg-config cairo-win32-dwrite-font ; then
     if pkg-config cairo-dwrite-font && pkg-config --max-version 1.50.14 pangocairo ; then
         curl -LO https://download.gnome.org/sources/pango/1.50/pango-1.50.14.tar.xz
-        curl -L https://gitlab.gnome.org/GNOME/pango/-/commit/9b9e86629eae7c757a467d8c825c3929f27ebc3c.patch > pango-0001-9b9e8662.patch
-        curl -L https://gitlab.gnome.org/GNOME/pango/-/commit/b446637f4a4cbc8018151d1a7186644cdcad8455.patch > pango-0002-b446637f.patch
-        curl -L https://gitlab.gnome.org/GNOME/pango/-/commit/c573c642cae54a57697d72ade3a17259a928fc8f.patch > pango-0003-c573c642.patch
-        curl -L https://gitlab.gnome.org/GNOME/pango/-/commit/d701e622f26ed19b986611d6a8a1601f8ebc881c.patch > pango-0004-d701e622.patch
+        curl -Lo pango-0001-9b9e8662.patch https://gitlab.gnome.org/GNOME/pango/-/commit/9b9e86629eae7c757a467d8c825c3929f27ebc3c.patch
+        curl -Lo pango-0002-b446637f.patch https://gitlab.gnome.org/GNOME/pango/-/commit/b446637f4a4cbc8018151d1a7186644cdcad8455.patch
+        curl -Lo pango-0003-c573c642.patch https://gitlab.gnome.org/GNOME/pango/-/commit/c573c642cae54a57697d72ade3a17259a928fc8f.patch
+        curl -Lo pango-0004-d701e622.patch https://gitlab.gnome.org/GNOME/pango/-/commit/d701e622f26ed19b986611d6a8a1601f8ebc881c.patch
         tar -xvpf pango-1.50.14.tar.xz
         cd pango-1.50.14
         find .. -maxdepth 1 -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
