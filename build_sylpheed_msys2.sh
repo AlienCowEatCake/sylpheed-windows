@@ -66,7 +66,8 @@ pacman -S --needed --noconfirm \
     ${MSYSTEM_PKG_PREFIX}-libiconv \
     ${MSYSTEM_PKG_PREFIX}-ca-certificates \
     ${MSYSTEM_PKG_PREFIX}-gpgme \
-    ${MSYSTEM_PKG_PREFIX}-sqlite3
+    ${MSYSTEM_PKG_PREFIX}-sqlite3 \
+    ${MSYSTEM_PKG_PREFIX}-meson
 
 function autogenSylpheed {
     local ACLOCAL=aclocal-1.15
@@ -182,6 +183,34 @@ make -j$(getconf _NPROCESSORS_ONLN)
 make install-strip
 cd ../..
 
+# @note https://github.com/AlienCowEatCake/sylpheed-windows/issues/6
+if ! pkg-config cairo-win32-dwrite-font ; then
+    if pkg-config cairo-dwrite-font && pkg-config --max-version 1.50.14 pangocairo ; then
+        curl -LO https://download.gnome.org/sources/pango/1.50/pango-1.50.14.tar.xz
+        curl -L https://gitlab.gnome.org/GNOME/pango/-/commit/9b9e86629eae7c757a467d8c825c3929f27ebc3c.patch > pango-0001-9b9e8662.patch
+        curl -L https://gitlab.gnome.org/GNOME/pango/-/commit/b446637f4a4cbc8018151d1a7186644cdcad8455.patch > pango-0002-b446637f.patch
+        curl -L https://gitlab.gnome.org/GNOME/pango/-/commit/c573c642cae54a57697d72ade3a17259a928fc8f.patch > pango-0003-c573c642.patch
+        curl -L https://gitlab.gnome.org/GNOME/pango/-/commit/d701e622f26ed19b986611d6a8a1601f8ebc881c.patch > pango-0004-d701e622.patch
+        tar -xvpf pango-1.50.14.tar.xz
+        cd pango-1.50.14
+        find .. -maxdepth 1 -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
+        mkdir build
+        cd build
+        meson setup \
+            --prefix="${DIST_PREFIX}" \
+            --default-library shared \
+            --auto-features=enabled \
+            -Dgtk_doc=false \
+            -Dxft=disabled \
+            --wrap-mode=nofallback \
+            -Dintrospection=disabled \
+            ..
+        meson compile
+        meson install
+        cd ../..
+    fi
+fi
+
 curl -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.bz2
 tar -xvpf sylpheed-3.8.0beta1.tar.bz2
 cd sylpheed-3.8.0beta1
@@ -264,7 +293,9 @@ cp -a bsfilter/bsfilter bsfilter/bsfilterw.exe "${DIST_PREFIX}/bin/"
 cp -a htdocs "${DIST_PREFIX}/share/sylpheed/bsfilter"
 cd ..
 
-rm -rf "${DIST_PREFIX}/bin/compface.exe" "${DIST_PREFIX}/bin/uncompface.exe" "${DIST_PREFIX}/bin/gpgme-config" "${DIST_PREFIX}/bin/gpgme-json.exe" "${DIST_PREFIX}/bin/gpgme-tool.exe"
+rm -rf "${DIST_PREFIX}/bin/compface.exe" "${DIST_PREFIX}/bin/uncompface.exe" \
+    "${DIST_PREFIX}/bin/gpgme-config" "${DIST_PREFIX}/bin/gpgme-json.exe" "${DIST_PREFIX}/bin/gpgme-tool.exe" \
+    "${DIST_PREFIX}/bin/pango-list.exe" "${DIST_PREFIX}/bin/pango-segmentation.exe" "${DIST_PREFIX}/bin/pango-view.exe"
 mv "${DIST_PREFIX}/bin/"* "${DIST_PREFIX}/"
 cp -a "${DIST_PREFIX}/sylfilter.exe" "${DIST_PREFIX}/sylfilter-cui.exe"
 mv "${DIST_PREFIX}/lib/sylpheed/plugins" "${DIST_PREFIX}/"
