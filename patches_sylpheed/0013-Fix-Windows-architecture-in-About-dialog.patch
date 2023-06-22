@@ -1,0 +1,47 @@
+From e5ced4722ea4965357e0a70c2acc19a13d3223a4 Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Fri, 23 Jun 2023 04:35:10 +0700
+Subject: [PATCH 13/13] Fix Windows architecture in About dialog
+
+---
+ src/about.c | 22 ++++++++++++++++++++--
+ 1 file changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/src/about.c b/src/about.c
+index cfbbc2f..7d3bbb4 100644
+--- a/src/about.c
++++ b/src/about.c
+@@ -120,10 +120,28 @@ static void about_create(void)
+ #elif defined(G_OS_WIN32)
+ 	g_snprintf(buf, sizeof(buf),
+ 		   "GTK+ %d.%d.%d / GLib %d.%d.%d\n"
+-		   "Operating System: %s",
++		   "Operating System: %s (%s)",
+ 		   gtk_major_version, gtk_minor_version, gtk_micro_version,
+ 		   glib_major_version, glib_minor_version, glib_micro_version,
+-		   "Win32");
++		   "Windows",
++#  if defined(_M_ARM64EC)
++		   "ARM64EC"
++#  elif defined(_M_ARM64) || defined(__aarch64__)
++		   "ARM64"
++#  elif defined(_M_ARM ) || defined(__arm) || defined(__arm__) || \
++	defined(_M_ARMT) || defined(_ARM ) || defined(__thumb__)
++		   "ARM"
++#  elif defined(_M_X64  ) || defined(__x86_64) || defined(__x86_64__) || \
++	defined(_M_AMD64) || defined(__amd64 ) || defined(__amd64__ )
++		   "x64"
++#  elif defined(_M_IX86 ) || defined(__X86__ ) || defined(__i386  ) || \
++	defined(__IA32__) || defined(__I86__ ) || defined(__i386__) || \
++	defined(__i486__) || defined(__i586__) || defined(__i686__)
++		   "x86"
++#  else
++		   "Unknown"
++#  endif
++		   );
+ #else
+ 	g_snprintf(buf, sizeof(buf),
+ 		   "GTK+ %d.%d.%d / GLib %d.%d.%d\n"
+-- 
+2.30.2
+
