@@ -240,7 +240,7 @@ strip "${DIST_PREFIX}/lib/sylpheed/plugins/attachment_tool.dll"
 # strip "${DIST_PREFIX}/lib/sylpheed/plugins/test.dll"
 cd ..
 
-curl -LO http://fallabs.com/qdbm/qdbm-1.8.78.tar.gz
+curl -Lo qdbm-1.8.78.tar.gz https://snapshot.debian.org/archive/debian/20111016T212433Z/pool/main/q/qdbm/qdbm_1.8.78.orig.tar.gz
 tar -xvpf qdbm-1.8.78.tar.gz
 cd qdbm-1.8.78
 ./configure --prefix="${DIST_PREFIX}" --enable-stable --enable-pthread --enable-zlib --enable-iconv
