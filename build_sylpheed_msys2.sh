@@ -331,8 +331,17 @@ fi
 find "${MSYSTEM_PREFIX}/bin" \( -name "gspawn*helper.exe" -o -name "gspawn*helper-console.exe" \) -exec cp -a \{\} "${DIST_PREFIX}/" \;
 cp -a "${MSYSTEM_PREFIX}/share/themes" "${DIST_PREFIX}/share/"
 
-function getDeps() {
+function getDepsImpl() {
     find "${DIST_PREFIX}" \( -name '*.exe' -o -name '*.dll' \) -not -name 'bsfilterw.exe' -exec objdump --private-headers \{\} \; | grep 'DLL Name:' | sort | uniq | sed 's|.* ||'
+}
+
+function getDeps() {
+    # @note https://github.com/AlienCowEatCake/ImageViewer/issues/8
+    local DEPS="$(getDepsImpl)"
+    if echo "${DEPS}" | xargs | grep -i "api-ms-win-crt-" > /dev/null ; then
+        DEPS="$(echo -e "${DEPS}\nucrtbase.dll" | sort | uniq)"
+    fi
+    echo "${DEPS}"
 }
 
 function checkDll() {
