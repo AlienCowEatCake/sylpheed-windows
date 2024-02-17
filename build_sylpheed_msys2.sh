@@ -215,6 +215,7 @@ curl -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.bz
 tar -xvpf sylpheed-3.8.0beta1.tar.bz2
 cd sylpheed-3.8.0beta1
 find "${SOURCE_DIR}/patches_sylpheed" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
+cp -a "${SOURCE_DIR}/misc/sylpheed.ico" "src/icons/sylpheed.ico"
 autogenSylpheed \
     --prefix="${DIST_PREFIX}" \
     --with-localedir=share/locale \
