@@ -300,7 +300,7 @@ mv "${DIST_PREFIX}/bin/"* "${DIST_PREFIX}/"
 cp -a "${DIST_PREFIX}/sylfilter.exe" "${DIST_PREFIX}/sylfilter-cui.exe"
 mv "${DIST_PREFIX}/lib/sylpheed/plugins" "${DIST_PREFIX}/"
 mv "${DIST_PREFIX}/share/sylpheed" "${DIST_PREFIX}/doc"
-rm -rf "${DIST_PREFIX}/bin" "${DIST_PREFIX}/include" "${DIST_PREFIX}/lib/"* "${DIST_PREFIX}/man" "${DIST_PREFIX}/share/applications" "${DIST_PREFIX}/share/pixmaps"
+rm -rf "${DIST_PREFIX}/bin" "${DIST_PREFIX}/include" "${DIST_PREFIX}/lib/"* "${DIST_PREFIX}/man" "${DIST_PREFIX}/share/applications" "${DIST_PREFIX}/share/pixmaps" "${DIST_PREFIX}/share/aclocal"
 
 mkdir -p "${DIST_PREFIX}/etc/ssl/certs"
 if [ -f "${MSYSTEM_PREFIX}/etc/ssl/certs/ca-bundle.crt" ] ; then
