@@ -1,18 +1,18 @@
-From 992fc2066461729e7051acbfb098b253c0378b73 Mon Sep 17 00:00:00 2001
+From fa42c5d131371ad3ea5772f4158b02ba15a1101c Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Sat, 17 Feb 2024 20:25:50 +0700
-Subject: [PATCH 14/15] Fix copy-paste hotkeys on Windows
+Subject: [PATCH 14/14] Fix copy-paste hotkeys on Windows
 
 ---
- src/addressbook.c |  56 +++++++++++++++++++++++++
- src/compose.c     |  28 +++++++++++--
- src/gtkutils.c    | 104 ++++++++++++++++++++++++++++++++++++++++++++++
- src/gtkutils.h    |   9 ++++
- src/mainwindow.c  |  38 +++++++++++++++++
- 5 files changed, 231 insertions(+), 4 deletions(-)
+ src/addressbook.c |  56 +++++++++++++++++++
+ src/compose.c     |  28 ++++++++--
+ src/gtkutils.c    | 139 ++++++++++++++++++++++++++++++++++++++++++++++
+ src/gtkutils.h    |  10 ++++
+ src/mainwindow.c  |  38 +++++++++++++
+ 5 files changed, 267 insertions(+), 4 deletions(-)
 
 diff --git a/src/addressbook.c b/src/addressbook.c
-index 592050d0..5e622740 100644
+index 592050d..5e62274 100644
 --- a/src/addressbook.c
 +++ b/src/addressbook.c
 @@ -273,6 +273,20 @@ static void addressbook_copy_address_cb		(gpointer	 data,
@@ -104,7 +104,7 @@ index 592050d0..5e622740 100644
  {
  	addressbook_close();
 diff --git a/src/compose.c b/src/compose.c
-index 42838fd3..4e90b46d 100644
+index 42838fd..4e90b46 100644
 --- a/src/compose.c
 +++ b/src/compose.c
 @@ -7963,11 +7963,14 @@ static void compose_redo_cb(Compose *compose)
@@ -211,10 +211,10 @@ index 42838fd3..4e90b46d 100644
  
  static void compose_grab_focus_cb(GtkWidget *widget, Compose *compose)
 diff --git a/src/gtkutils.c b/src/gtkutils.c
-index b1a488af..5f499697 100644
+index b1a488a..33db071 100644
 --- a/src/gtkutils.c
 +++ b/src/gtkutils.c
-@@ -1117,3 +1117,107 @@ void gtkut_events_flush(void)
+@@ -1117,3 +1117,142 @@ void gtkut_events_flush(void)
  {
  	GTK_EVENTS_FLUSH();
  }
@@ -247,6 +247,41 @@ index b1a488af..5f499697 100644
 +	return NULL;
 +}
 +
++static void gtkut_get_selected_cb(GtkWidget *widget, gpointer data)
++{
++	GtkWidget **selected = (GtkWidget **)data;
++	gint start = 0, end = 0;
++
++	if (!widget || !selected)
++		return;
++
++	if (GTK_IS_CONTAINER(widget))
++		gtk_container_foreach(GTK_CONTAINER(widget), gtkut_get_selected_cb, data);
++
++	if (*selected)
++		return;
++
++	if (GTK_IS_LABEL(widget) &&
++	    gtk_label_get_selectable(GTK_LABEL(widget)) &&
++	    gtk_label_get_selection_bounds(GTK_LABEL(widget), &start, &end)) {
++		*selected = widget;
++	}
++}
++
++GtkWidget *gtkut_get_selected_widget(void)
++{
++	GtkWindow *window = gtkut_get_active_window();
++	if (window) {
++		GtkWidget *selected = NULL;
++		gtk_container_foreach(GTK_CONTAINER(window), gtkut_get_selected_cb, &selected);
++		if (selected) {
++			return selected;
++		}
++		return gtkut_get_focus_widget();
++	}
++	return NULL;
++}
++
 +gboolean gtkut_is_active_window(GtkWindow *window)
 +{
 +	GtkWindow *active_window = gtkut_get_active_window();
@@ -261,7 +296,7 @@ index b1a488af..5f499697 100644
 +
 +gboolean gtkut_default_cut(void)
 +{
-+	GtkWidget *focus_widget = gtkut_get_focus_widget();
++	GtkWidget *focus_widget = gtkut_get_selected_widget();
 +	if (focus_widget) {
 +		if (GTK_IS_LABEL(focus_widget) &&
 +		    gtk_label_get_selectable(GTK_LABEL(focus_widget))) {
@@ -278,7 +313,7 @@ index b1a488af..5f499697 100644
 +
 +gboolean gtkut_default_copy(void)
 +{
-+	GtkWidget *focus_widget = gtkut_get_focus_widget();
++	GtkWidget *focus_widget = gtkut_get_selected_widget();
 +	if (focus_widget) {
 +		if ((GTK_IS_LABEL(focus_widget) &&
 +		     gtk_label_get_selectable(GTK_LABEL(focus_widget))) ||
@@ -323,15 +358,16 @@ index b1a488af..5f499697 100644
 +	return FALSE;
 +}
 diff --git a/src/gtkutils.h b/src/gtkutils.h
-index 1872e672..a47f56d4 100644
+index 1872e67..0434c2e 100644
 --- a/src/gtkutils.h
 +++ b/src/gtkutils.h
-@@ -235,4 +235,13 @@ void gtkut_widget_init			(void);
+@@ -235,4 +235,14 @@ void gtkut_widget_init			(void);
  
  void gtkut_events_flush			(void);
  
 +GtkWindow *gtkut_get_active_window	(void);
 +GtkWidget *gtkut_get_focus_widget	(void);
++GtkWidget *gtkut_get_selected_widget	(void);
 +gboolean gtkut_is_active_window		(GtkWindow	*window);
 +
 +gboolean gtkut_default_cut		(void);
@@ -341,7 +377,7 @@ index 1872e672..a47f56d4 100644
 +
  #endif /* __GTKUTILS_H__ */
 diff --git a/src/mainwindow.c b/src/mainwindow.c
-index bc7e7135..786363e9 100644
+index bc7e713..786363e 100644
 --- a/src/mainwindow.c
 +++ b/src/mainwindow.c
 @@ -486,9 +486,19 @@ static void goto_folder_cb	 (MainWindow	*mainwin,
@@ -417,5 +453,5 @@ index bc7e7135..786363e9 100644
  		summary_select_all(mainwin->summaryview);
  	else if (GTK_WIDGET_HAS_FOCUS(mainwin->summaryview->qsearch->entry))
 -- 
-2.43.0.windows.1
+2.44.0
 
