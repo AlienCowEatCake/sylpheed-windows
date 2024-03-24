@@ -185,29 +185,32 @@ cd ../..
 
 # @note https://github.com/AlienCowEatCake/sylpheed-windows/issues/6
 if ! pkg-config cairo-win32-dwrite-font ; then
-    if pkg-config cairo-dwrite-font && pkg-config --max-version 1.50.14 pangocairo ; then
-        curl -LO https://download.gnome.org/sources/pango/1.50/pango-1.50.14.tar.xz
-        curl -Lo pango-0001-9b9e8662.patch https://gitlab.gnome.org/GNOME/pango/-/commit/9b9e86629eae7c757a467d8c825c3929f27ebc3c.patch
-        curl -Lo pango-0002-b446637f.patch https://gitlab.gnome.org/GNOME/pango/-/commit/b446637f4a4cbc8018151d1a7186644cdcad8455.patch
-        curl -Lo pango-0003-c573c642.patch https://gitlab.gnome.org/GNOME/pango/-/commit/c573c642cae54a57697d72ade3a17259a928fc8f.patch
-        curl -Lo pango-0004-d701e622.patch https://gitlab.gnome.org/GNOME/pango/-/commit/d701e622f26ed19b986611d6a8a1601f8ebc881c.patch
-        tar -xvpf pango-1.50.14.tar.xz
-        cd pango-1.50.14
-        find .. -maxdepth 1 -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
-        mkdir build
-        cd build
-        meson setup \
-            --prefix="${DIST_PREFIX}" \
-            --default-library shared \
-            --auto-features=enabled \
-            -Dgtk_doc=false \
-            -Dxft=disabled \
-            --wrap-mode=nofallback \
-            -Dintrospection=disabled \
-            ..
-        meson compile
-        meson install
-        cd ../..
+    if pkg-config cairo-dwrite-font ; then
+        for PANGO_VER in 1.50.14 1.52.1 ; do
+            if pkg-config --max-version ${PANGO_VER} pangocairo ; then
+                curl -LO https://download.gnome.org/sources/pango/$(echo ${PANGO_VER} | sed 's|\([0-9]*\.[0-9]*\).*|\1|')/pango-${PANGO_VER}.tar.xz
+                tar -xvpf pango-${PANGO_VER}.tar.xz
+                cd pango-${PANGO_VER}
+                if [ -d "${SOURCE_DIR}/patches/pango-${PANGO_VER}" ] ; then
+                    find "${SOURCE_DIR}/patches/pango-${PANGO_VER}" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
+                fi
+                mkdir build
+                cd build
+                meson setup \
+                    --prefix="${DIST_PREFIX}" \
+                    --default-library shared \
+                    --auto-features=enabled \
+                    -Dgtk_doc=false \
+                    -Dxft=disabled \
+                    --wrap-mode=nofallback \
+                    -Dintrospection=disabled \
+                    ..
+                meson compile
+                meson install
+                cd ../..
+                break
+            fi
+        done
     fi
 fi
 
