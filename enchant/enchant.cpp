@@ -79,12 +79,12 @@ static std::string wstring_to_utf8(const std::wstring &wstr)
     return strTo;
 }
 
-struct str_enchant_broker
+struct _EnchantBroker
 {
     ISpellCheckerFactory *factory;
     HRESULT init_result;
 
-    str_enchant_broker()
+    _EnchantBroker()
         : factory(NULL)
     {
         init_result = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -92,7 +92,7 @@ struct str_enchant_broker
             factory = NULL;
     }
 
-    ~str_enchant_broker()
+    ~_EnchantBroker()
     {
         if(factory)
             factory->Release();
@@ -101,13 +101,13 @@ struct str_enchant_broker
     }
 };
 
-struct str_enchant_dict
+struct _EnchantDict
 {
     ISpellChecker *checker;
     std::string language;
     std::set<std::string> ignores;
 
-    str_enchant_dict(ISpellCheckerFactory *factory, const char *const tag)
+    _EnchantDict(ISpellCheckerFactory *factory, const char *const tag)
         : checker(NULL)
         , language(tag)
     {
@@ -132,7 +132,7 @@ struct str_enchant_dict
         CoTaskMemFree(value);
     }
 
-    ~str_enchant_dict()
+    ~_EnchantDict()
     {
         if(checker)
             checker->Release();
