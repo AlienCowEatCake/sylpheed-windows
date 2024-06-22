@@ -1,0 +1,25 @@
+From 32f30661d209e692ee57ddc6a7fea214b3d1af45 Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Fri, 21 Jun 2024 22:22:50 +0700
+Subject: [PATCH 3/3] Fix hardcoded gcc command
+
+---
+ Makefile.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile.in b/Makefile.in
+index f9f3946..53e332f 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -59,7 +59,7 @@ $(LIBNAME) :	$(OBJECTS)
+ 		-$(RANLIB) $(LIBNAME)
+ 
+ $(SHLIB) :	$(LIBNAME)
+-		gcc -shared -o $(SHLIB) -Wl,--out-implib=$(IMPLIBNAME) \
++		$(CC) -shared -o $(SHLIB) -Wl,--out-implib=$(IMPLIBNAME) \
+ 		-Wl,--export-all-symbols -Wl,--enable-auto-import \
+ 		-Wl,--whole-archive $(LIBNAME) -Wl,--no-whole-archive
+ 
+-- 
+2.45.1
+

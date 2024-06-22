@@ -60,7 +60,7 @@ pacman -S --needed --noconfirm \
     intltool \
     ${MSYSTEM_PKG_PREFIX}-toolchain \
     ${MSYSTEM_PKG_PREFIX}-gtk2 \
-    ${MSYSTEM_PKG_PREFIX}-curl-winssl \
+    ${MSYSTEM_PKG_PREFIX}-curl \
     ${MSYSTEM_PKG_PREFIX}-openssl \
     ${MSYSTEM_PKG_PREFIX}-oniguruma \
     ${MSYSTEM_PKG_PREFIX}-libiconv \
@@ -92,7 +92,7 @@ rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
 
-g++ -O3 -std=c++14 -shared -fPIC -o "${DIST_PREFIX}/bin/libenchant-2.dll" -Wall \
+c++ -O3 -std=c++14 -shared -fPIC -o "${DIST_PREFIX}/bin/libenchant-2.dll" -Wall \
     -Wl,--out-implib="${DIST_PREFIX}/lib/libenchant-2.dll.a" \
     -Wl,--export-all-symbols -Wl,--enable-auto-import \
     -Wl,--whole-archive "${SOURCE_DIR}/enchant/enchant.cpp" -Wl,--no-whole-archive \
@@ -124,11 +124,11 @@ if [ -f "${DIST_PREFIX}/lib/libgtkspell.a" ] ; then
     mkdir temp
     cd temp
     ar x "${DIST_PREFIX}/lib/libgtkspell.a"
-    gcc -shared -o "${DIST_PREFIX}/bin/libgtkspell-0.dll" \
+    cc -shared -o "${DIST_PREFIX}/bin/libgtkspell-0.dll" \
         -Wl,--out-implib="${DIST_PREFIX}/lib/libgtkspell.dll.a" \
         -Wl,--export-all-symbols -Wl,--enable-auto-import \
         -Wl,--whole-archive *.o -Wl,--no-whole-archive \
-        $(pkgconf --libs gtk+-2.0) $(pkgconf --libs enchant-2)
+        $(pkg-config --libs gtk+-2.0) $(pkg-config --libs enchant-2)
     rm -rf "${DIST_PREFIX}/lib/libgtkspell.a" "${DIST_PREFIX}/lib/libgtkspell.la"
     cd ..
 fi
@@ -155,7 +155,7 @@ cd ..
 
 USE_OPENSSL_APPLINK="true"
 echo -e '#include <openssl/applink.c>\nint main(int argc, char *argv[]){return 0;}' > "test_applink.c"
-gcc "test_applink.c" $(pkg-config --cflags openssl) $(pkg-config --libs openssl) -o "test_applink.exe" >/dev/null 2>/dev/null || USE_OPENSSL_APPLINK="false"
+cc "test_applink.c" $(pkg-config --cflags openssl) $(pkg-config --libs openssl) -o "test_applink.exe" >/dev/null 2>/dev/null || USE_OPENSSL_APPLINK="false"
 rm -f "test_applink.c" "test_applink.exe"
 echo -e "\nUSE_OPENSSL_APPLINK=${USE_OPENSSL_APPLINK}\n"
 
@@ -166,7 +166,7 @@ cd gpgme-1.23.2
 autoreconf -ivf
 DOXYGEN=/usr/bin/doxygen \
 PYTHON=${MINGW_PREFIX}/bin/python3 \
-CFLAGS="${CFLAGS} -O3 -DNDEBUG -Wno-int-conversion -Wno-incompatible-function-pointer-types" \
+CFLAGS="${CFLAGS} -O3 -DNDEBUG -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-incompatible-function-pointer-types" \
 ./configure \
     --prefix="${DIST_PREFIX}" \
     --libexecdir="${DIST_PREFIX}/bin" \
@@ -186,7 +186,7 @@ cd ../..
 # @note https://github.com/AlienCowEatCake/sylpheed-windows/issues/6
 if ! pkg-config cairo-win32-dwrite-font ; then
     if pkg-config cairo-dwrite-font ; then
-        for PANGO_VER in 1.50.14 1.52.1 1.52.2 ; do
+        for PANGO_VER in 1.50.14 1.52.1 1.52.2 1.54.0 ; do
             if pkg-config --max-version ${PANGO_VER} pangocairo ; then
                 curl -LO https://download.gnome.org/sources/pango/$(echo ${PANGO_VER} | sed 's|\([0-9]*\.[0-9]*\).*|\1|')/pango-${PANGO_VER}.tar.xz
                 tar -xvpf pango-${PANGO_VER}.tar.xz
@@ -200,7 +200,7 @@ if ! pkg-config cairo-win32-dwrite-font ; then
                     --prefix="${DIST_PREFIX}" \
                     --default-library shared \
                     --auto-features=enabled \
-                    -Dgtk_doc=false \
+                    -D$(pkg-config --atleast-version 1.54.0 pangocairo && echo documentation || echo gtk_doc)=false \
                     -Dxft=disabled \
                     --wrap-mode=nofallback \
                     -Dintrospection=disabled \
@@ -249,7 +249,7 @@ tar -xvpf qdbm-1.8.78.tar.gz
 cd qdbm-1.8.78
 ./configure --prefix="${DIST_PREFIX}" --enable-stable --enable-pthread --enable-zlib --enable-iconv
 for i in $(cat Makefile.in | grep -E '^MYLIBOBJS = ' | sed 's|MYLIBOBJS = || ; s|\.o||g') ; do
-    gcc -c -O3 -DQDBM_STATIC -I. -DMYPTHREAD -DMYZLIB -DMYICONV -DNDEBUG -fPIC "${i}.c" -o "${i}.o"
+    cc -c -O3 -DQDBM_STATIC -I. -DMYPTHREAD -DMYZLIB -DMYICONV -DNDEBUG -fPIC "${i}.c" -o "${i}.o"
 done
 ar rcs "${DIST_PREFIX}/lib/libqdbm.a" *.o
 for i in $(cat Makefile.in | grep -E '^MYHEADS = ' | sed 's|MYHEADS = ||') ; do
@@ -275,7 +275,7 @@ find "${SOURCE_DIR}/patches_sylfilter" -name '*.patch' | sort | while IFS= read 
 if "${USE_OPENSSL_APPLINK}" ; then
     echo -e '\n#include <openssl/applink.c>\n' >> "src/sylfilter.c"
 fi
-gcc -O3 -DNDEBUG \
+cc -O3 -DNDEBUG \
     lib/*.c lib/filters/*.c src/*.c \
     -I. -I./lib -I./lib/filters -I${DIST_PREFIX}/include/sylpheed -lsylph-0 \
     $(pkg-config --cflags glib-2.0 qdbm sqlite3) $(pkg-config --libs glib-2.0 qdbm sqlite3) \
@@ -285,7 +285,7 @@ cd ..
 curl -Lo libwab-master.tar.gz https://github.com/pboettch/libwab/archive/refs/heads/master.tar.gz
 tar -xvpf libwab-master.tar.gz
 cd libwab-master
-gcc cencode.c libwab.c pstwabids.c tools.c uerr.c wabread.c \
+cc cencode.c libwab.c pstwabids.c tools.c uerr.c wabread.c \
     $(pkg-config --cflags iconv) $(pkg-config --libs iconv) \
     -O3 -DHAVE_ICONV -DNDEBUG -o "${DIST_PREFIX}/bin/wabread.exe" -s
 cd ..
@@ -398,6 +398,24 @@ EOF
     popd > /dev/null
 }
 
+function fixupCurlCertsPaths() {
+    grep -rl /ssl/certs/ca-bundle.crt "${DIST_PREFIX}" | while IFS= read -r item ; do
+        local name="${item##*/}"
+        if [ -f "${DIST_PREFIX}/${name}" ] ; then
+            # Curl-specific: https://github.com/msys2/MINGW-packages/blob/26ee6e9cb9935583b66e30493820d76845ef06b7/mingw-w64-curl/0001-Make-cURL-relocatable.patch#L68
+            if echo "${name}" | grep curl > /dev/null ; then
+                echo "Fixup certs paths for ${name}"
+                # Remove /bin suffix from CURL_BINDIR because we don't use /bin
+                perl -pi -e "s|${MSYSTEM_PREFIX}/bin\0|${MSYSTEM_PREFIX}\0\0\0\0\0|g" "${DIST_PREFIX}/${name}"
+                # Replace ca-bundle.crt to certs.crt in CURL_CA_BUNDLE (new style paths)
+                perl -pi -e "s|${MSYSTEM_PREFIX}/etc/ssl/certs/ca-bundle.crt\0|${MSYSTEM_PREFIX}/etc/ssl/certs/certs.crt\0\0\0\0\0|g" "${DIST_PREFIX}/${name}"
+                # Replace ca-bundle.crt to certs.crt and add /etc in CURL_CA_PATH (old style paths)
+                perl -pi -e "s|${MSYSTEM_PREFIX}/ssl/certs/ca-bundle.crt\0|${MSYSTEM_PREFIX}/etc/ssl/certs/certs.crt\0|g" "${DIST_PREFIX}/${name}"
+            fi
+        fi
+    done
+}
+
 function getCRTPath() {
     cat << EOF | cmd | tail -3 | head -1
 set VCVARS="$(getVCVARSPath)"
@@ -422,6 +440,7 @@ function stripAll() {
 
 copyDlls "${MSYSTEM_PREFIX}/bin"
 fixupExes
+fixupCurlCertsPaths
 stripAll
 copyDlls "$(cygpath -u "$(getCRTPath)")" "$(cygpath -u "$(getUCRTPath)")"
 
