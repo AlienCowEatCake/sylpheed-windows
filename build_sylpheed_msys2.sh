@@ -6,25 +6,21 @@ SOURCE_DIR="$(cd "$(dirname "${0}")" && pwd)"
 MSYSTEM_PKG_PREFIX="mingw-w64"
 VCVARS_ARCH=""
 CRT_ARCH=""
-UCRT_ARCH=""
 NSIS_ARCH=""
 if [ "${MSYSTEM}" == "UCRT64" ] ; then
     MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-ucrt-x86_64"
     VCVARS_ARCH="x64"
     CRT_ARCH="x64"
-    UCRT_ARCH="x64"
     NSIS_ARCH="x64"
 elif [ "${MSYSTEM}" == "MINGW32" ] ; then
     MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-i686"
     VCVARS_ARCH="x64_x86"
     CRT_ARCH="x86"
-    UCRT_ARCH="x86"
     NSIS_ARCH="x86"
 elif [ "${MSYSTEM}" == "MINGW64" ] ; then
     MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-x86_64"
     VCVARS_ARCH="x64"
     CRT_ARCH="x64"
-    UCRT_ARCH="x64"
     NSIS_ARCH="x64"
 elif [ "${MSYSTEM}" == "CLANG32" ] ; then
     echo "**********************************************************************"
@@ -35,19 +31,16 @@ elif [ "${MSYSTEM}" == "CLANG32" ] ; then
     MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-clang-i686"
     VCVARS_ARCH="x64_x86"
     CRT_ARCH="x86"
-    UCRT_ARCH="x86"
     NSIS_ARCH="x86"
 elif [ "${MSYSTEM}" == "CLANG64" ] ; then
     MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-clang-x86_64"
     VCVARS_ARCH="x64"
     CRT_ARCH="x64"
-    UCRT_ARCH="x64"
     NSIS_ARCH="x64"
 elif [ "${MSYSTEM}" == "CLANGARM64" ] ; then
     MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-clang-aarch64"
     VCVARS_ARCH="arm64"
     CRT_ARCH="arm64"
-    UCRT_ARCH="arm64"
     NSIS_ARCH="x64"
 else
     echo "Unknown or broken MSYSTEM: ${MSYSTEM}"
@@ -85,7 +78,7 @@ function autogenSylpheed {
         && ./configure "${@}"
 }
 
-DIST_PREFIX="${PWD}/sylpheed-3.8.0beta1-${MSYSTEM,,?}"
+DIST_PREFIX="${PWD}/sylpheed-3.8.0beta1-${CRT_ARCH}-${MSYSTEM,,?}"
 rm -rf "${DIST_PREFIX}"
 mkdir -p "${DIST_PREFIX}/lib/pkgconfig" "${DIST_PREFIX}/include" "${DIST_PREFIX}/bin"
 export PATH="${DIST_PREFIX}/bin:${PATH}:"
@@ -440,7 +433,7 @@ function getUCRTPath() {
     cat << EOF | cmd | tail -3 | head -1
 set VCVARS="$(getVCVARSPath)"
 call %VCVARS% ${VCVARS_ARCH}
-echo %UniversalCRTSdkDir%Redist\%UCRTVersion%\ucrt\DLLs\\${UCRT_ARCH}
+echo %UniversalCRTSdkDir%Redist\%UCRTVersion%\ucrt\DLLs\\${CRT_ARCH}
 EOF
 }
 
@@ -506,7 +499,7 @@ find Sylpheed -mindepth 1 -maxdepth 1 -type f | sed 's|.*/\(.*\)$|  Delete "$INS
 MSYS2_ARG_CONV_EXCL="*" makensis /DARCH_${NSIS_ARCH} sylpheed.nsi
 find . -mindepth 1 -maxdepth 1 -type f -name 'Sylpheed*_setup.exe' | while IFS= read -r item ; do
     name="${item##*/}"
-    mv "${name}" "${DIST_PREFIX}/../$(echo "${name}" | sed "s|\(.*\)\(\.exe\)|\1_${MSYSTEM,,?}\2|")"
+    mv "${name}" "${DIST_PREFIX}/../$(echo "${name}" | sed "s|\(.*\)\(\.exe\)|\1_${CRT_ARCH}_${MSYSTEM,,?}\2|")"
 done
 cd ../..
 
