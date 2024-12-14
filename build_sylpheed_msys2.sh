@@ -116,7 +116,7 @@ curl -LO https://gtkspell.sourceforge.io/download/gtkspell-2.0.16.tar.gz
 tar -xvpf gtkspell-2.0.16.tar.gz
 cd gtkspell-2.0.16
 find "${SOURCE_DIR}/patches/gtkspell-2.0.16" \( -name '*.patch' -o -name '*.diff' \) | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
-./configure --prefix="${DIST_PREFIX}" --enable-shared --disable-static
+./configure --prefix="${DIST_PREFIX}" --disable-dependency-tracking --enable-shared --disable-static
 make -j$(getconf _NPROCESSORS_ONLN)
 make install
 rm -rf "${DIST_PREFIX}/share/gtk-doc"
@@ -170,6 +170,7 @@ CFLAGS="${CFLAGS} -O3 -DNDEBUG -Wno-int-conversion -Wno-incompatible-pointer-typ
 ./configure \
     --prefix="${DIST_PREFIX}" \
     --libexecdir="${DIST_PREFIX}/bin" \
+    --disable-dependency-tracking \
     --disable-static \
     --enable-languages='' \
     --disable-gpgconf-test \
@@ -228,6 +229,7 @@ autogenSylpheed \
     --disable-ldap --enable-ssl \
     --enable-compface --enable-gtkspell \
     --enable-libcurl --enable-ipv6 \
+    --disable-dependency-tracking \
     --enable-shared --disable-static \
     CFLAGS=-O3 \
     CPPFLAGS="-I${DIST_PREFIX}/include" \
@@ -268,7 +270,12 @@ curl -LO http://sylpheed.sraoss.jp/sylfilter/src/sylfilter-0.8.tar.gz
 tar -xvpf sylfilter-0.8.tar.gz
 cd sylfilter-0.8
 find "${SOURCE_DIR}/patches_sylfilter" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
-./configure --prefix="${DIST_PREFIX}" --enable-shared --disable-static --enable-sqlite --enable-qdbm --disable-gdbm --with-libsylph=sylpheed \
+./configure \
+    --prefix="${DIST_PREFIX}" \
+    --disable-dependency-tracking \
+    --enable-shared --disable-static \
+    --enable-sqlite --enable-qdbm --disable-gdbm \
+    --with-libsylph=sylpheed \
     CFLAGS=-O3 \
     CPPFLAGS="-I${DIST_PREFIX}/include -I${DIST_PREFIX}/include/sylpheed" \
     LDFLAGS="-L${DIST_PREFIX}/lib"
