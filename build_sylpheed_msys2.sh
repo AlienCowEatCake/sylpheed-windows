@@ -27,6 +27,11 @@ elif [ "${MSYSTEM}" == "MINGW64" ] ; then
     UCRT_ARCH="x64"
     NSIS_ARCH="x64"
 elif [ "${MSYSTEM}" == "CLANG32" ] ; then
+    echo "**********************************************************************"
+    echo "Deprecated or broken MSYSTEM - CLANG32:"
+    echo "https://www.msys2.org/news/#2024-09-23-starting-to-drop-the-clang32-environment"
+    echo "Please consider switching to MINGW32 for 32-bit builds"
+    echo "**********************************************************************"
     MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-clang-i686"
     VCVARS_ARCH="x64_x86"
     CRT_ARCH="x86"
