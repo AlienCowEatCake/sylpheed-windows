@@ -60,11 +60,11 @@ pacman -S --needed --noconfirm \
     libgpgme-devel \
     zip \
     unzip \
-    intltool \
     ${MSYSTEM_PKG_PREFIX}-toolchain \
     ${MSYSTEM_PKG_PREFIX}-gtk2 \
     ${MSYSTEM_PKG_PREFIX}-curl \
     ${MSYSTEM_PKG_PREFIX}-openssl \
+    ${MSYSTEM_PKG_PREFIX}-gtkspell \
     ${MSYSTEM_PKG_PREFIX}-oniguruma \
     ${MSYSTEM_PKG_PREFIX}-libiconv \
     ${MSYSTEM_PKG_PREFIX}-ca-certificates \
@@ -114,28 +114,6 @@ Version: 2.8.2
 Libs: -L\${libdir} -lenchant-2
 Cflags: -I\${includedir}/enchant-2
 EOF
-
-curl -LO https://gtkspell.sourceforge.io/download/gtkspell-2.0.16.tar.gz
-tar -xvpf gtkspell-2.0.16.tar.gz
-cd gtkspell-2.0.16
-find "${SOURCE_DIR}/patches/gtkspell-2.0.16" \( -name '*.patch' -o -name '*.diff' \) | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
-./configure --prefix="${DIST_PREFIX}" --disable-dependency-tracking --enable-shared --disable-static
-make -j$(getconf _NPROCESSORS_ONLN)
-make install
-rm -rf "${DIST_PREFIX}/share/gtk-doc"
-if [ -f "${DIST_PREFIX}/lib/libgtkspell.a" ] ; then
-    mkdir temp
-    cd temp
-    ar x "${DIST_PREFIX}/lib/libgtkspell.a"
-    cc -shared -o "${DIST_PREFIX}/bin/libgtkspell-0.dll" \
-        -Wl,--out-implib="${DIST_PREFIX}/lib/libgtkspell.dll.a" \
-        -Wl,--export-all-symbols -Wl,--enable-auto-import \
-        -Wl,--whole-archive *.o -Wl,--no-whole-archive \
-        $(pkg-config --libs gtk+-2.0) $(pkg-config --libs enchant-2)
-    rm -rf "${DIST_PREFIX}/lib/libgtkspell.a" "${DIST_PREFIX}/lib/libgtkspell.la"
-    cd ..
-fi
-cd ..
 
 curl -LO http://ftp.xemacs.org/pub/xemacs/aux/compface-1.5.2.tar.gz
 tar -xvpf compface-1.5.2.tar.gz
