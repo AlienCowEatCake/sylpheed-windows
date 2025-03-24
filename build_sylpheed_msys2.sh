@@ -185,7 +185,7 @@ cd ../..
 # @note https://github.com/AlienCowEatCake/sylpheed-windows/issues/6
 if ! pkg-config cairo-win32-dwrite-font ; then
     if pkg-config cairo-dwrite-font ; then
-        for PANGO_VER in 1.50.14 1.52.1 1.52.2 1.54.0 ; do
+        for PANGO_VER in 1.50.14 1.52.1 1.52.2 1.54.0 1.56.0 1.56.1 1.56.2 1.56.3 ; do
             if pkg-config --max-version ${PANGO_VER} pangocairo ; then
                 curl -LO https://download.gnome.org/sources/pango/$(echo ${PANGO_VER} | sed 's|\([0-9]*\.[0-9]*\).*|\1|')/pango-${PANGO_VER}.tar.xz
                 tar -xvpf pango-${PANGO_VER}.tar.xz
