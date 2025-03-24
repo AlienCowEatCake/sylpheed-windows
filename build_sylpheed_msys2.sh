@@ -142,7 +142,7 @@ make install
 cd ..
 
 # @note --tls-max 1.2: https://github.com/curl/curl/issues/9431
-curl --tls-max 1.2 -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.4/wintoastlibc_${VCVARS_ARCH##*_}.zip"
+curl --tls-max 1.2 -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.5/wintoastlibc_${VCVARS_ARCH##*_}.zip"
 unzip "wintoastlibc_${VCVARS_ARCH##*_}.zip"
 cd "$(echo "wintoastlibc_${VCVARS_ARCH##*_}.zip" | sed 's|\.zip$||')"
 cp -a *.h "${DIST_PREFIX}/include/"
@@ -158,9 +158,9 @@ rm -f "test_applink.c" "test_applink.exe"
 echo -e "\nUSE_OPENSSL_APPLINK=${USE_OPENSSL_APPLINK}\n"
 
 # @note https://github.com/AlienCowEatCake/sylpheed-windows/issues/4
-curl -LO https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-1.24.1.tar.bz2
-tar -xvpf gpgme-1.24.1.tar.bz2
-cd gpgme-1.24.1
+curl -LO https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-1.24.2.tar.bz2
+tar -xvpf gpgme-1.24.2.tar.bz2
+cd gpgme-1.24.2
 autoreconf -ivf
 DOXYGEN=/usr/bin/doxygen \
 PYTHON=${MINGW_PREFIX}/bin/python3 \

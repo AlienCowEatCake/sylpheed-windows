@@ -1,15 +1,15 @@
-From 2710e2273ca6888bef56b59cf076ca2ab3577305 Mon Sep 17 00:00:00 2001
+From a9ebfc83b6437656bd33a919105c3e65af25f7d8 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Sun, 4 Dec 2022 03:28:39 +0700
-Subject: [PATCH 10/11] Use native Windows toast notifications
+Subject: [PATCH 10/14] Use native Windows toast notifications
 
 ---
- configure.ac             |   35 ++++
- src/notificationwindow.c |  396 ++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 431 insertions(+), 0 deletions(-)
+ configure.ac             |  35 ++++
+ src/notificationwindow.c | 400 +++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 435 insertions(+)
 
 diff --git a/configure.ac b/configure.ac
-index 2a0c2c9..057d506 100644
+index 2a0c2c9e..8522021e 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -362,6 +362,40 @@ else
@@ -31,7 +31,7 @@ index 2a0c2c9..057d506 100644
 +			ac_save_LIBS="$LIBS"
 +			LIBS="$LIBS -lwintoastlibc -lshlwapi -lole32"
 +			AC_TRY_LINK([ #include <wintoastlibc.h> ],
-+				[ BOOL c = WTLC_isCompatible(); ],
++				[ UINT64 v = WTLC_runtimeVersion(); ],
 +				[ ac_cv_wintoast=yes ],
 +				[ LIBS="$ac_save_LIBS"
 +				  ac_cv_wintoast=no ])
@@ -62,10 +62,10 @@ index 2a0c2c9..057d506 100644
  echo "libcurl       : $ac_cv_enable_libcurl"
  echo ""
 diff --git a/src/notificationwindow.c b/src/notificationwindow.c
-index 966c708..a884dd4 100644
+index 966c7083..ed98b96d 100644
 --- a/src/notificationwindow.c
 +++ b/src/notificationwindow.c
-@@ -29,11 +29,407 @@
+@@ -29,11 +29,411 @@
  #  include <windows.h>
  #endif
  
@@ -119,6 +119,7 @@ index 966c708..a884dd4 100644
 +
 +static void deliver_notification(const gchar *message, const gchar *submessage)
 +{
++	WTLC_Handler handler;
 +	WTLC_Error error = WTLC_Error_NoError;
 +	gchar *buf = NULL;
 +	wchar_t *wbuf = NULL;
@@ -135,8 +136,11 @@ index 966c708..a884dd4 100644
 +	WTLC_Template_setSecondLine(wtlc_templ, wbuf);
 +	g_free(wbuf);
 +
-+	if (WTLC_showToast(wtlc_instance, wtlc_templ, NULL, &wtlc_cb_toast_activated,
-+			   &wtlc_cb_toast_activated_action, NULL, NULL, &error) < 0) {
++	ZeroMemory(&handler, sizeof(handler));
++	handler.version = WTLC_VERSION;
++	handler.toastActivated = &wtlc_cb_toast_activated;
++	handler.toastActivatedAction = &wtlc_cb_toast_activated_action;
++	if (WTLC_showToastEx(wtlc_instance, wtlc_templ, &handler, &error) < 0) {
 +		gchar *error_string = g_utf16_to_utf8(WTLC_strerror(error), -1, NULL, NULL, NULL);
 +		log_error("[WTLC] WTLC_showToast error: %s\n", error_string);
 +		g_free(error_string);
@@ -313,8 +317,8 @@ index 966c708..a884dd4 100644
 +		return FALSE;
 +	}
 +
-+	RegSetValueExW(aumid_key, L"DisplayName", 0, REG_SZ, (LPBYTE)display_name, (wcslen(display_name) + 1) * sizeof(wchar_t));
-+	RegSetValueExW(aumid_key, L"IconUri", 0, REG_SZ, (LPBYTE)icon_uri, (wcslen(icon_uri) + 1) * sizeof(wchar_t));
++	RegSetValueExW(aumid_key, L"DisplayName", 0, REG_SZ, (LPBYTE)display_name, (DWORD)((wcslen(display_name) + 1) * sizeof(wchar_t)));
++	RegSetValueExW(aumid_key, L"IconUri", 0, REG_SZ, (LPBYTE)icon_uri, (DWORD)((wcslen(icon_uri) + 1) * sizeof(wchar_t)));
 +
 +	RegCloseKey(aumid_key);
 +	RegCloseKey(aumid_root);
@@ -474,5 +478,5 @@ index 966c708..a884dd4 100644
  #define NOTIFICATIONWINDOW_WIDTH		380
  #define NOTIFICATIONWINDOW_HEIGHT		80
 -- 
-1.7.9
+2.47.1.windows.1
 
