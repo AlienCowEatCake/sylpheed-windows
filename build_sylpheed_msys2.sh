@@ -68,6 +68,8 @@ mkdir -p "${DIST_PREFIX}/lib/pkgconfig" "${DIST_PREFIX}/include" "${DIST_PREFIX}
 export PATH="${DIST_PREFIX}/bin:${PATH}:"
 export LD_LIBRARY_PATH="${DIST_PREFIX}/lib:${LD_LIBRARY_PATH}:"
 export PKG_CONFIG_PATH="${DIST_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}:"
+export CFLAGS="-O3 -Wno-implicit-int -Wno-int-conversion -Wno-incompatible-pointer-types"
+export CPPFLAGS="-DNDEBUG"
 
 BUILD_DIR="${PWD}/build_${MSYSTEM}"
 rm -rf "${BUILD_DIR}"
@@ -98,6 +100,7 @@ curl -LO http://ftp.xemacs.org/pub/xemacs/aux/compface-1.5.2.tar.gz
 tar -xvpf compface-1.5.2.tar.gz
 cd compface-1.5.2
 find "${SOURCE_DIR}/patches/compface-1.5.2" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
+autoreconf -ivf
 ./configure --prefix="${DIST_PREFIX}"
 make -j$(getconf _NPROCESSORS_ONLN)
 make install
@@ -125,7 +128,6 @@ cd gpgme-1.24.2
 autoreconf -ivf
 DOXYGEN=/usr/bin/doxygen \
 PYTHON=${MINGW_PREFIX}/bin/python3 \
-CFLAGS="${CFLAGS} -O3 -DNDEBUG -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-incompatible-function-pointer-types" \
 ./configure \
     --prefix="${DIST_PREFIX}" \
     --libexecdir="${DIST_PREFIX}/bin" \
@@ -159,8 +161,8 @@ autogenSylpheed \
     --enable-libcurl --enable-ipv6 \
     --disable-dependency-tracking \
     --enable-shared --disable-static \
-    CFLAGS=-O3 \
-    CPPFLAGS="-I${DIST_PREFIX}/include" \
+    CFLAGS="${CFLAGS}" \
+    CPPFLAGS="${CPPFLAGS} -I${DIST_PREFIX}/include" \
     LDFLAGS="-L${DIST_PREFIX}/lib"
 if "${USE_OPENSSL_APPLINK}" ; then
     echo -e '\n#include <openssl/applink.c>\n' >> "src/main.c"
@@ -179,7 +181,7 @@ tar -xvpf qdbm-1.8.78.tar.gz
 cd qdbm-1.8.78
 ./configure --prefix="${DIST_PREFIX}" --enable-stable --enable-pthread --enable-zlib --enable-iconv
 for i in $(cat Makefile.in | grep -E '^MYLIBOBJS = ' | sed 's|MYLIBOBJS = || ; s|\.o||g') ; do
-    cc -c -O3 -DQDBM_STATIC -I. -DMYPTHREAD -DMYZLIB -DMYICONV -DNDEBUG -fPIC "${i}.c" -o "${i}.o"
+    cc -c ${CPPFLAGS} ${CFLAGS} -DQDBM_STATIC -I. -DMYPTHREAD -DMYZLIB -DMYICONV -fPIC "${i}.c" -o "${i}.o"
 done
 ar rcs "${DIST_PREFIX}/lib/libqdbm.a" *.o
 for i in $(cat Makefile.in | grep -E '^MYHEADS = ' | sed 's|MYHEADS = ||') ; do
@@ -204,13 +206,13 @@ find "${SOURCE_DIR}/patches_sylfilter" -name '*.patch' | sort | while IFS= read 
     --enable-shared --disable-static \
     --enable-sqlite --enable-qdbm --disable-gdbm \
     --with-libsylph=sylpheed \
-    CFLAGS=-O3 \
-    CPPFLAGS="-I${DIST_PREFIX}/include -I${DIST_PREFIX}/include/sylpheed" \
+    CFLAGS="${CFLAGS}" \
+    CPPFLAGS="${CPPFLAGS} -I${DIST_PREFIX}/include -I${DIST_PREFIX}/include/sylpheed" \
     LDFLAGS="-L${DIST_PREFIX}/lib"
 if "${USE_OPENSSL_APPLINK}" ; then
     echo -e '\n#include <openssl/applink.c>\n' >> "src/sylfilter.c"
 fi
-cc -O3 -DNDEBUG \
+cc ${CPPFLAGS} ${CFLAGS} \
     lib/*.c lib/filters/*.c src/*.c \
     -I. -I./lib -I./lib/filters -I${DIST_PREFIX}/include/sylpheed -lsylph-0 \
     $(pkg-config --cflags glib-2.0 qdbm sqlite3) $(pkg-config --libs glib-2.0 qdbm sqlite3) \
@@ -220,9 +222,10 @@ cd ..
 curl -Lo libwab-master.tar.gz https://github.com/pboettch/libwab/archive/refs/heads/master.tar.gz
 tar -xvpf libwab-master.tar.gz
 cd libwab-master
-cc cencode.c libwab.c pstwabids.c tools.c uerr.c wabread.c \
+cc ${CPPFLAGS} ${CFLAGS} \
+    cencode.c libwab.c pstwabids.c tools.c uerr.c wabread.c \
     $(pkg-config --cflags iconv) $(pkg-config --libs iconv) \
-    -O3 -DHAVE_ICONV -DNDEBUG -o "${DIST_PREFIX}/bin/wabread.exe" -s
+    -DHAVE_ICONV -o "${DIST_PREFIX}/bin/wabread.exe" -s
 cd ..
 
 curl -LO https://sylpheed.sraoss.jp/sylpheed/others/bsfilter-1.0.17.rc4.tgz

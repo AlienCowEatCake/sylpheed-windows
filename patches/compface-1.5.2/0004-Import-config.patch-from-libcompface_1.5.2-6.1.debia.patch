@@ -1,0 +1,25 @@
+From c163d373f183b19c3b218327e912b728614785c3 Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Sun, 10 Aug 2025 17:01:06 +0700
+Subject: [PATCH 4/4] Import config.patch from
+ libcompface_1.5.2-6.1.debian.tar.xz
+
+---
+ config.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/config.h b/config.h
+index 57fce54..633c79b 100644
+--- a/config.h
++++ b/config.h
+@@ -1,6 +1,7 @@
+ #ifdef	STDC_HEADERS
+ #include <stdlib.h>
+ #include <string.h>
++#include <unistd.h>
+ #else	/* Not STDC_HEADERS */
+ #ifdef HAVE_STRINGS_H
+ #include <strings.h>
+-- 
+2.39.5
+
