@@ -12,31 +12,11 @@ if [ "${MSYSTEM}" == "UCRT64" ] ; then
     VCVARS_ARCH="x64"
     CRT_ARCH="x64"
     NSIS_ARCH="x64"
-elif [ "${MSYSTEM}" == "MINGW32" ] ; then
-    echo "**********************************************************************"
-    echo "Deprecated or broken MSYSTEM - MINGW32:"
-    echo "https://github.com/msys2/MINGW-packages/pull/23723"
-    echo "Please consider switching to 64-bit builds"
-    echo "**********************************************************************"
-    MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-i686"
-    VCVARS_ARCH="x64_x86"
-    CRT_ARCH="x86"
-    NSIS_ARCH="x86"
 elif [ "${MSYSTEM}" == "MINGW64" ] ; then
     MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-x86_64"
     VCVARS_ARCH="x64"
     CRT_ARCH="x64"
     NSIS_ARCH="x64"
-elif [ "${MSYSTEM}" == "CLANG32" ] ; then
-    echo "**********************************************************************"
-    echo "Deprecated or broken MSYSTEM - CLANG32:"
-    echo "https://www.msys2.org/news/#2024-09-23-starting-to-drop-the-clang32-environment"
-    echo "Please consider switching to 64-bit builds"
-    echo "**********************************************************************"
-    MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-clang-i686"
-    VCVARS_ARCH="x64_x86"
-    CRT_ARCH="x86"
-    NSIS_ARCH="x86"
 elif [ "${MSYSTEM}" == "CLANG64" ] ; then
     MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-clang-x86_64"
     VCVARS_ARCH="x64"
@@ -69,8 +49,7 @@ pacman -S --needed --noconfirm \
     ${MSYSTEM_PKG_PREFIX}-libiconv \
     ${MSYSTEM_PKG_PREFIX}-ca-certificates \
     ${MSYSTEM_PKG_PREFIX}-gpgme \
-    ${MSYSTEM_PKG_PREFIX}-sqlite3 \
-    ${MSYSTEM_PKG_PREFIX}-meson
+    ${MSYSTEM_PKG_PREFIX}-sqlite3
 
 function autogenSylpheed {
     local ACLOCAL=aclocal-1.15
@@ -124,8 +103,7 @@ make -j$(getconf _NPROCESSORS_ONLN)
 make install
 cd ..
 
-# @note --tls-max 1.2: https://github.com/curl/curl/issues/9431
-curl --tls-max 1.2 -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.5/wintoastlibc_${VCVARS_ARCH##*_}.zip"
+curl -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.5/wintoastlibc_${VCVARS_ARCH##*_}.zip"
 unzip "wintoastlibc_${VCVARS_ARCH##*_}.zip"
 cd "$(echo "wintoastlibc_${VCVARS_ARCH##*_}.zip" | sed 's|\.zip$||')"
 cp -a *.h "${DIST_PREFIX}/include/"
@@ -164,37 +142,6 @@ cd src
 make -j$(getconf _NPROCESSORS_ONLN)
 make install-strip
 cd ../..
-
-# @note https://github.com/AlienCowEatCake/sylpheed-windows/issues/6
-if ! pkg-config cairo-win32-dwrite-font ; then
-    if pkg-config cairo-dwrite-font ; then
-        for PANGO_VER in 1.50.14 1.52.1 1.52.2 1.54.0 1.56.0 1.56.1 1.56.2 1.56.3 ; do
-            if pkg-config --max-version ${PANGO_VER} pangocairo ; then
-                curl -LO https://download.gnome.org/sources/pango/$(echo ${PANGO_VER} | sed 's|\([0-9]*\.[0-9]*\).*|\1|')/pango-${PANGO_VER}.tar.xz
-                tar -xvpf pango-${PANGO_VER}.tar.xz
-                cd pango-${PANGO_VER}
-                if [ -d "${SOURCE_DIR}/patches/pango-${PANGO_VER}" ] ; then
-                    find "${SOURCE_DIR}/patches/pango-${PANGO_VER}" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
-                fi
-                mkdir build
-                cd build
-                meson setup \
-                    --prefix="${DIST_PREFIX}" \
-                    --default-library shared \
-                    --auto-features=enabled \
-                    -D$(pkg-config --atleast-version 1.54.0 pangocairo && echo documentation || echo gtk_doc)=false \
-                    -Dxft=disabled \
-                    --wrap-mode=nofallback \
-                    -Dintrospection=disabled \
-                    ..
-                meson compile
-                meson install
-                cd ../..
-                break
-            fi
-        done
-    fi
-fi
 
 curl -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.bz2
 tar -xvpf sylpheed-3.8.0beta1.tar.bz2
@@ -286,8 +233,7 @@ cp -a htdocs "${DIST_PREFIX}/share/sylpheed/bsfilter"
 cd ..
 
 rm -rf "${DIST_PREFIX}/bin/compface.exe" "${DIST_PREFIX}/bin/uncompface.exe" \
-    "${DIST_PREFIX}/bin/gpgme-config" "${DIST_PREFIX}/bin/gpgme-json.exe" "${DIST_PREFIX}/bin/gpgme-tool.exe" \
-    "${DIST_PREFIX}/bin/pango-list.exe" "${DIST_PREFIX}/bin/pango-segmentation.exe" "${DIST_PREFIX}/bin/pango-view.exe"
+    "${DIST_PREFIX}/bin/gpgme-config" "${DIST_PREFIX}/bin/gpgme-json.exe" "${DIST_PREFIX}/bin/gpgme-tool.exe"
 mv "${DIST_PREFIX}/bin/"* "${DIST_PREFIX}/"
 cp -a "${DIST_PREFIX}/sylfilter.exe" "${DIST_PREFIX}/sylfilter-cui.exe"
 mv "${DIST_PREFIX}/lib/sylpheed/plugins" "${DIST_PREFIX}/"
@@ -308,11 +254,7 @@ echo 'gtk-theme-name = "MS-Windows"' > "${DIST_PREFIX}/etc/gtk-2.0/gtkrc"
 
 cp -a "${MSYSTEM_PREFIX}/lib/gdk-pixbuf-2.0" "${DIST_PREFIX}/lib/"
 cp -a "${MSYSTEM_PREFIX}/lib/gtk-2.0" "${DIST_PREFIX}/lib/"
-if pkg-config --atleast-version 3.0.0 openssl ; then
-    cp -a "${MSYSTEM_PREFIX}/lib/engines-3" "${DIST_PREFIX}/lib/"
-else
-    cp -a "${MSYSTEM_PREFIX}/lib/engines-1_1" "${DIST_PREFIX}/lib/"
-fi
+cp -a "${MSYSTEM_PREFIX}/lib/engines-3" "${DIST_PREFIX}/lib/"
 find "${DIST_PREFIX}" \( -name '*.a' -o -name '*.la' \) -delete
 find "${DIST_PREFIX}" -name 'include' | sort | while IFS= read -r item ; do rm -rf "${item}" ; done
 
