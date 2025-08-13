@@ -1,0 +1,790 @@
+From 634b62cbc9e53d6ef3f6479763facb1201de6ccb Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Thu, 14 Aug 2025 02:34:43 +0700
+Subject: [PATCH 15/15] Set DWMWA_USE_IMMERSIVE_DARK_MODE attribute to all
+ windows
+
+https://github.com/AlienCowEatCake/sylpheed-windows/issues/11
+---
+ configure.ac               |  2 +-
+ src/about.c                |  1 +
+ src/account_dialog.c       |  2 ++
+ src/action.c               |  1 +
+ src/addressadd.c           |  1 +
+ src/addressbook.c          |  1 +
+ src/alertpanel.c           |  1 +
+ src/compose.c              |  3 +++
+ src/editaddress.c          |  1 +
+ src/editbook.c             |  1 +
+ src/editgroup.c            |  1 +
+ src/editjpilot.c           |  1 +
+ src/editldap.c             |  1 +
+ src/editldap_basedn.c      |  1 +
+ src/editvcard.c            |  1 +
+ src/exportcsv.c            |  1 +
+ src/filesel.c              |  1 +
+ src/foldersel.c            |  1 +
+ src/folderview.c           |  1 +
+ src/gtkutils.c             | 26 ++++++++++++++++++++++++++
+ src/gtkutils.h             |  2 ++
+ src/import.c               |  1 +
+ src/importcsv.c            |  1 +
+ src/importldif.c           |  1 +
+ src/inputdialog.c          |  1 +
+ src/logwindow.c            |  1 +
+ src/mainwindow.c           |  4 ++++
+ src/message_search.c       |  1 +
+ src/messageview.c          |  1 +
+ src/plugin_manager.c       |  1 +
+ src/prefs_actions.c        |  1 +
+ src/prefs_common_dialog.c  |  4 ++++
+ src/prefs_customheader.c   |  1 +
+ src/prefs_display_header.c |  1 +
+ src/prefs_display_items.c  |  1 +
+ src/prefs_filter.c         |  1 +
+ src/prefs_filter_edit.c    |  2 ++
+ src/prefs_summary_column.c |  1 +
+ src/prefs_template.c       |  1 +
+ src/prefs_ui.c             |  1 +
+ src/progressdialog.c       |  1 +
+ src/query_search.c         |  2 ++
+ src/rpop3.c                |  1 +
+ src/select-keys.c          |  1 +
+ src/setup.c                |  2 ++
+ src/sigstatus.c            |  1 +
+ src/sourcewindow.c         |  1 +
+ src/sslmanager.c           |  2 ++
+ src/subscribedialog.c      |  1 +
+ 49 files changed, 88 insertions(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index 8522021..acecf15 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -87,7 +87,7 @@ case "$target" in
+ 	CFLAGS="$CFLAGS -mms-bitfields -mwindows"
+ 	LIBS="$LIBS"
+ 	LIBSYLPH_LIBS="-lws2_32 -lwinmm"
+-	SYLPHEED_LIBS="-lole32 -Wl,-luuid"
++	SYLPHEED_LIBS="-lole32 -Wl,-luuid -ldwmapi"
+ 	AC_CHECK_PROG(WINDRES, windres, windres)
+ 	;;
+ esac
+diff --git a/src/about.c b/src/about.c
+index 7d3bbb4..be0644f 100644
+--- a/src/about.c
++++ b/src/about.c
+@@ -88,6 +88,7 @@ static void about_create(void)
+ 	gint i;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("About"));
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+ 	gtk_widget_set_size_request(window, 518 * gtkut_get_dpi_multiplier(), 358 * gtkut_get_dpi_multiplier());
+diff --git a/src/account_dialog.c b/src/account_dialog.c
+index 89f3054..b19baaa 100644
+--- a/src/account_dialog.c
++++ b/src/account_dialog.c
+@@ -296,6 +296,7 @@ static void account_edit_create(void)
+ 	debug_print(_("Creating account edit window...\n"));
+ 
+ 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request (window, 500 * gtkut_get_dpi_multiplier(), 320 * gtkut_get_dpi_multiplier());
+ 	gtk_container_set_border_width (GTK_CONTAINER (window), 8);
+ 	gtk_window_set_title (GTK_WINDOW (window), _("Edit accounts"));
+@@ -475,6 +476,7 @@ static GtkWidget *account_wait_window_create(const gchar *str)
+ 	GtkWidget *label;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, 380 * gtkut_get_dpi_multiplier(), 60 * gtkut_get_dpi_multiplier());
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+ 	gtk_window_set_position(GTK_WINDOW(window),
+diff --git a/src/action.c b/src/action.c
+index d4c6d60..22f1cc5 100644
+--- a/src/action.c
++++ b/src/action.c
+@@ -1082,6 +1082,7 @@ static void create_io_dialog(Children *children)
+ 	debug_print("Creating action IO dialog\n");
+ 
+ 	dialog = gtk_dialog_new();
++	gtkut_setup_immersive_dark_mode(dialog);
+ 	gtk_container_set_border_width
+ 		(GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), 5);
+ 	gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER);
+diff --git a/src/addressadd.c b/src/addressadd.c
+index fde7930..04b3b72 100644
+--- a/src/addressadd.c
++++ b/src/addressadd.c
+@@ -152,6 +152,7 @@ static void addressadd_create( void ) {
+ 	gint top;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window,
+ 				    300 * gtkut_get_dpi_multiplier(),
+ 				    360 * gtkut_get_dpi_multiplier());
+diff --git a/src/addressbook.c b/src/addressbook.c
+index 5e62274..de4d859 100644
+--- a/src/addressbook.c
++++ b/src/addressbook.c
+@@ -639,6 +639,7 @@ static void addressbook_create(void)
+ 	debug_print("Creating addressbook window...\n");
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Address book"));
+ 	gtk_window_set_wmclass(GTK_WINDOW(window), "addressbook", "Sylpheed");
+ 	gtk_window_set_policy(GTK_WINDOW(window), FALSE, TRUE, TRUE);
+diff --git a/src/alertpanel.c b/src/alertpanel.c
+index 723125e..58cc151 100644
+--- a/src/alertpanel.c
++++ b/src/alertpanel.c
+@@ -224,6 +224,7 @@ static void alertpanel_create(const gchar *title,
+ 	debug_print(_("Creating alert panel dialog...\n"));
+ 
+ 	dialog = gtk_dialog_new();
++	gtkut_setup_immersive_dark_mode(dialog);
+ 	gtk_window_set_title(GTK_WINDOW(dialog), title);
+ 	gtk_window_set_policy(GTK_WINDOW(dialog), FALSE, FALSE, FALSE);
+ 	gtk_window_set_position(GTK_WINDOW(dialog),
+diff --git a/src/compose.c b/src/compose.c
+index 4e90b46..7bf576e 100644
+--- a/src/compose.c
++++ b/src/compose.c
+@@ -3268,6 +3268,7 @@ static gboolean compose_check_recipients(Compose *compose)
+ 		return TRUE;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Check recipients"));
+ 	gtk_window_set_position(GTK_WINDOW(window),
+@@ -5414,6 +5415,7 @@ static Compose *compose_create(PrefsAccount *account, ComposeMode mode)
+ 	compose->account = account;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_wmclass(GTK_WINDOW(window), "compose", "Sylpheed");
+ 	gtk_window_set_policy(GTK_WINDOW(window), TRUE, TRUE, FALSE);
+ 	gtk_widget_set_size_request(window, -1, prefs_common.compose_height);
+@@ -6885,6 +6887,7 @@ static void compose_attach_property_create(gboolean *cancelled)
+ 	debug_print("Creating attach property window...\n");
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, 480 * gtkut_get_dpi_multiplier(), -1);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Properties"));
+diff --git a/src/editaddress.c b/src/editaddress.c
+index a9f058d..b85046a 100644
+--- a/src/editaddress.c
++++ b/src/editaddress.c
+@@ -475,6 +475,7 @@ static void addressbook_edit_person_dialog_create( gboolean *cancelled ) {
+ 	GtkWidget *statusbar;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, EDITPERSON_WIDTH, EDITPERSON_HEIGHT );
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Edit Person Data"));
+ 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER_ON_PARENT);
+diff --git a/src/editbook.c b/src/editbook.c
+index 4e42e43..9780fb0 100644
+--- a/src/editbook.c
++++ b/src/editbook.c
+@@ -171,6 +171,7 @@ static void addressbook_edit_book_create( gboolean *cancelled ) {
+ 	gint top;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, 450, -1);
+ 	gtk_container_set_border_width( GTK_CONTAINER(window), 0 );
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Edit Address Book"));
+diff --git a/src/editgroup.c b/src/editgroup.c
+index 21fcfcd..68c021a 100644
+--- a/src/editgroup.c
++++ b/src/editgroup.c
+@@ -492,6 +492,7 @@ static void addressbook_edit_group_create( gboolean *cancelled ) {
+ 	titles[ GROUP_COL_REMARKS ] = _("Remarks");
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, EDITGROUP_WIDTH, EDITGROUP_HEIGHT);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Edit Group Data"));
+ 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER_ON_PARENT);
+diff --git a/src/editjpilot.c b/src/editjpilot.c
+index 436d181..5ea2ceb 100644
+--- a/src/editjpilot.c
++++ b/src/editjpilot.c
+@@ -243,6 +243,7 @@ static void addressbook_edit_jpilot_create( gboolean *cancelled ) {
+ 	gint top, i;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, 450, -1);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 0);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Edit JPilot Entry"));
+diff --git a/src/editldap.c b/src/editldap.c
+index ebb7a25..0222aba 100644
+--- a/src/editldap.c
++++ b/src/editldap.c
+@@ -217,6 +217,7 @@ static void addressbook_edit_ldap_dialog_create( gboolean *cancelled ) {
+ 	GtkWidget *statusbar;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, 450, -1);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 0);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Edit LDAP Server"));
+diff --git a/src/editldap_basedn.c b/src/editldap_basedn.c
+index 2e59b25..9c6d01b 100644
+--- a/src/editldap_basedn.c
++++ b/src/editldap_basedn.c
+@@ -143,6 +143,7 @@ static void edit_ldap_bdn_create(void) {
+ 	gint top;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, 300, 270);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 0);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Edit LDAP - Select Search Base"));
+diff --git a/src/editvcard.c b/src/editvcard.c
+index b2b020d..1b0b83e 100644
+--- a/src/editvcard.c
++++ b/src/editvcard.c
+@@ -156,6 +156,7 @@ static void addressbook_edit_vcard_create( gboolean *cancelled ) {
+ 	gint top;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, 450, -1);
+ 	gtk_container_set_border_width( GTK_CONTAINER(window), 0 );
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Edit vCard Entry"));
+diff --git a/src/exportcsv.c b/src/exportcsv.c
+index 3fa35ee..6e82d00 100644
+--- a/src/exportcsv.c
++++ b/src/exportcsv.c
+@@ -492,6 +492,7 @@ static void exp_csv_dialog_create() {
+ 	GtkWidget *statusbar;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, EXPORTCSV_WIDTH, EXPORTCSV_HEIGHT );
+ 	gtk_window_set_title( GTK_WINDOW(window), _("Export Address Book into CSV file") );
+ 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+diff --git a/src/filesel.c b/src/filesel.c
+index 2c224c4..9a69c96 100644
+--- a/src/filesel.c
++++ b/src/filesel.c
+@@ -405,6 +405,7 @@ static GtkWidget *filesel_create(const gchar *title,
+ 			 ? GTK_STOCK_SAVE : GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+ 			 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+ 			 NULL);
++	gtkut_setup_immersive_dark_mode(dialog);
+ 	gtk_window_set_position(GTK_WINDOW(dialog),
+ 				GTK_WIN_POS_CENTER_ON_PARENT);
+ 	gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+diff --git a/src/foldersel.c b/src/foldersel.c
+index cc5076d..cbbba7a 100644
+--- a/src/foldersel.c
++++ b/src/foldersel.c
+@@ -253,6 +253,7 @@ static void foldersel_create(void)
+ 	GtkTreeSelection *selection;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Select folder"));
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 4);
+ 	gtk_window_set_position(GTK_WINDOW(window),
+diff --git a/src/folderview.c b/src/folderview.c
+index dc9582c..8660246 100644
+--- a/src/folderview.c
++++ b/src/folderview.c
+@@ -944,6 +944,7 @@ static GtkWidget *label_window_create(const gchar *str)
+ 	GtkWidget *label;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, 380, 60);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+ 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+diff --git a/src/gtkutils.c b/src/gtkutils.c
+index 33db071..643bca0 100644
+--- a/src/gtkutils.c
++++ b/src/gtkutils.c
+@@ -31,6 +31,8 @@
+ #include <stdarg.h>
+ 
+ #ifdef G_OS_WIN32
++#  include <dwmapi.h>
++#  include <gdk/gdkwin32.h>
+ #  include <pango/pangowin32.h>
+ #endif
+ 
+@@ -74,6 +76,7 @@ PangoFontDescription *gtkut_get_default_font_desc(void)
+ 		GtkWidget *window;
+ 
+ 		window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++		gtkut_setup_immersive_dark_mode(window);
+ 		gtk_widget_ensure_style(window);
+ 		font_desc = pango_font_description_copy
+ 			(window->style->font_desc);
+@@ -1256,3 +1259,26 @@ gboolean gtkut_default_allsel(void)
+ 	}
+ 	return FALSE;
+ }
++
++#ifdef G_OS_WIN32
++static void gtkut_on_window_realize_cb(GtkWidget *widget, gpointer data)
++{
++	GdkWindow *gdk_window = gtk_widget_get_window(widget);
++	if (gdk_window) {
++		HWND hwnd = GDK_WINDOW_HWND(gdk_window);
++		BOOL enabled = TRUE;
++		DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &enabled, sizeof(BOOL));
++	}
++}
++#endif
++
++void gtkut_setup_immersive_dark_mode(GtkWidget *window)
++{
++#ifdef G_OS_WIN32
++	g_return_if_fail(window != NULL);
++
++	g_signal_connect_after(window, "realize", G_CALLBACK(gtkut_on_window_realize_cb), NULL);
++	if (GTK_WIDGET_REALIZED(window))
++		gtkut_on_window_realize_cb(window, NULL);
++#endif
++}
+diff --git a/src/gtkutils.h b/src/gtkutils.h
+index 0434c2e..3bd08cc 100644
+--- a/src/gtkutils.h
++++ b/src/gtkutils.h
+@@ -245,4 +245,6 @@ gboolean gtkut_default_copy		(void);
+ gboolean gtkut_default_paste		(void);
+ gboolean gtkut_default_allsel		(void);
+ 
++void gtkut_setup_immersive_dark_mode	(GtkWidget	*window);
++
+ #endif /* __GTKUTILS_H__ */
+diff --git a/src/import.c b/src/import.c
+index b323270..f2fd6aa 100644
+--- a/src/import.c
++++ b/src/import.c
+@@ -591,6 +591,7 @@ static void import_create(void)
+ 	GtkWidget *confirm_area;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Import"));
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 5);
+ 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+diff --git a/src/importcsv.c b/src/importcsv.c
+index 0562495..8e05c32 100644
+--- a/src/importcsv.c
++++ b/src/importcsv.c
+@@ -882,6 +882,7 @@ static void imp_csv_dialog_create() {
+ 	GtkWidget *statusbar;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, IMPORTCSV_WIDTH, IMPORTCSV_HEIGHT );
+ 	gtk_window_set_title( GTK_WINDOW(window), _("Import CSV file into Address Book") );
+ 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+diff --git a/src/importldif.c b/src/importldif.c
+index d8f52fd..0fe098c 100644
+--- a/src/importldif.c
++++ b/src/importldif.c
+@@ -697,6 +697,7 @@ static void imp_ldif_dialog_create() {
+ 	GtkWidget *statusbar;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_widget_set_size_request(window, IMPORTLDIF_WIDTH, IMPORTLDIF_HEIGHT );
+ 	gtk_window_set_title( GTK_WINDOW(window), _("Import LDIF file into Address Book") );
+ 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+diff --git a/src/inputdialog.c b/src/inputdialog.c
+index a601085..f2574b9 100644
+--- a/src/inputdialog.c
++++ b/src/inputdialog.c
+@@ -177,6 +177,7 @@ static void input_dialog_create(InputDialogType dialog_type)
+ 	GtkWidget *cancel_button;
+ 
+ 	dialog = gtk_dialog_new();
++	gtkut_setup_immersive_dark_mode(dialog);
+ 	gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
+ 	gtk_widget_set_size_request(dialog, DIALOG_WIDTH * gtkut_get_dpi_multiplier(), -1);
+ 	gtk_container_set_border_width
+diff --git a/src/logwindow.c b/src/logwindow.c
+index 4cfae8c..121b03e 100644
+--- a/src/logwindow.c
++++ b/src/logwindow.c
+@@ -69,6 +69,7 @@ LogWindow *log_window_create(void)
+ 	logwin = g_new0(LogWindow, 1);
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Protocol log"));
+ 	gtk_window_set_wmclass(GTK_WINDOW(window), "log_window", "Sylpheed");
+ 	gtk_window_set_policy(GTK_WINDOW(window), TRUE, TRUE, FALSE);
+diff --git a/src/mainwindow.c b/src/mainwindow.c
+index 786363e..3d06a18 100644
+--- a/src/mainwindow.c
++++ b/src/mainwindow.c
+@@ -984,6 +984,7 @@ MainWindow *main_window_create(SeparateType type)
+ 
+ 	/* main window */
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title(GTK_WINDOW(window), PROG_VERSION);
+ 	gtk_window_set_policy(GTK_WINDOW(window), TRUE, TRUE, FALSE);
+ 	gtk_window_set_wmclass(GTK_WINDOW(window), "main_window", "Sylpheed");
+@@ -2403,6 +2404,7 @@ static void main_window_set_widgets(MainWindow *mainwin, LayoutType layout,
+ 	/* create separated window(s) if needed */
+ 	if (type & SEPARATE_FOLDER) {
+ 		folderwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++		gtkut_setup_immersive_dark_mode(folderwin);
+ 		gtk_window_set_title(GTK_WINDOW(folderwin),
+ 				     _("Sylpheed - Folder View"));
+ 		gtk_window_set_wmclass(GTK_WINDOW(folderwin),
+@@ -2423,6 +2425,7 @@ static void main_window_set_widgets(MainWindow *mainwin, LayoutType layout,
+ 	}
+ 	if (type & SEPARATE_MESSAGE) {
+ 		messagewin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++		gtkut_setup_immersive_dark_mode(messagewin);
+ 		gtk_window_set_title(GTK_WINDOW(messagewin),
+ 				     _("Sylpheed - Message View"));
+ 		gtk_window_set_wmclass(GTK_WINDOW(messagewin),
+@@ -4176,6 +4179,7 @@ static void help_command_line_show(void)
+ 	}
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Command line options"));
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+ 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+diff --git a/src/message_search.c b/src/message_search.c
+index 29d4737..3ca1950 100644
+--- a/src/message_search.c
++++ b/src/message_search.c
+@@ -116,6 +116,7 @@ static void message_search_create(void)
+ 	GtkWidget *close_btn;
+ 
+ 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title (GTK_WINDOW (window),
+ 			      _("Find in current message"));
+ 	gtk_widget_set_size_request (window, 450 * gtkut_get_dpi_multiplier(), -1);
+diff --git a/src/messageview.c b/src/messageview.c
+index 782bc80..78317af 100644
+--- a/src/messageview.c
++++ b/src/messageview.c
+@@ -478,6 +478,7 @@ MessageView *messageview_create_with_new_window(void)
+ 	guint n_menu_entries;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Message View - Sylpheed"));
+ 	gtk_window_set_wmclass(GTK_WINDOW(window), "message_view", "Sylpheed");
+ 	gtk_window_set_policy(GTK_WINDOW(window), TRUE, TRUE, FALSE);
+diff --git a/src/plugin_manager.c b/src/plugin_manager.c
+index 793fa5b..490a4b6 100644
+--- a/src/plugin_manager.c
++++ b/src/plugin_manager.c
+@@ -128,6 +128,7 @@ static void plugin_manager_create(void)
+ 	GtkCellRenderer *renderer;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Plug-in manager"));
+ 	gtk_widget_set_size_request(window, 600, 400);
+ 	gtk_window_set_policy(GTK_WINDOW(window), FALSE, TRUE, TRUE);
+diff --git a/src/prefs_actions.c b/src/prefs_actions.c
+index 4718493..2526d57 100644
+--- a/src/prefs_actions.c
++++ b/src/prefs_actions.c
+@@ -151,6 +151,7 @@ static void prefs_actions_create(MainWindow *mainwin)
+ 	debug_print("Creating actions configuration window...\n");
+ 
+ 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 
+ 	gtk_container_set_border_width(GTK_CONTAINER (window), 8);
+ 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+diff --git a/src/prefs_common_dialog.c b/src/prefs_common_dialog.c
+index b46c9b7..2f8376f 100644
+--- a/src/prefs_common_dialog.c
++++ b/src/prefs_common_dialog.c
+@@ -3508,6 +3508,7 @@ static GtkWidget *date_format_create(GtkButton *button, void *data)
+ 	if (datefmt_win) return datefmt_win;
+ 
+ 	datefmt_win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(datefmt_win);
+ 	gtk_container_set_border_width(GTK_CONTAINER(datefmt_win), 8);
+ 	gtk_window_set_title(GTK_WINDOW(datefmt_win), _("Date format"));
+ 	gtk_window_set_position(GTK_WINDOW(datefmt_win), GTK_WIN_POS_CENTER);
+@@ -3645,6 +3646,7 @@ static void prefs_quote_colors_dialog_create(void)
+ 	GtkWidget *frame_colors;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 2);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Set message colors"));
+ 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+@@ -3928,6 +3930,7 @@ static void prefs_quote_description_create(void)
+ 	GtkWidget *ok_btn;
+ 
+ 	quote_desc_win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(quote_desc_win);
+ 	gtk_window_set_title(GTK_WINDOW(quote_desc_win),
+ 			     _("Description of symbols"));
+ 	gtk_container_set_border_width(GTK_CONTAINER(quote_desc_win), 8);
+@@ -4063,6 +4066,7 @@ static void prefs_keybind_select(void)
+ 	GtkWidget *cancel_btn;
+ 
+ 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_container_set_border_width (GTK_CONTAINER (window), 8);
+ 	gtk_window_set_title (GTK_WINDOW (window), _("Key bindings"));
+ 	gtk_window_set_position (GTK_WINDOW (window), GTK_WIN_POS_CENTER);
+diff --git a/src/prefs_customheader.c b/src/prefs_customheader.c
+index b9dfd04..76b4651 100644
+--- a/src/prefs_customheader.c
++++ b/src/prefs_customheader.c
+@@ -142,6 +142,7 @@ static void prefs_custom_header_create(void)
+ 	debug_print("Creating custom header setting window...\n");
+ 
+ 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_container_set_border_width (GTK_CONTAINER (window), 8);
+ 	gtk_window_set_position (GTK_WINDOW (window), GTK_WIN_POS_CENTER);
+ 	gtk_window_set_modal (GTK_WINDOW (window), TRUE);
+diff --git a/src/prefs_display_header.c b/src/prefs_display_header.c
+index dcab6cf..15a1ee0 100644
+--- a/src/prefs_display_header.c
++++ b/src/prefs_display_header.c
+@@ -179,6 +179,7 @@ static void prefs_display_header_create(void)
+ 	debug_print(_("Creating display header setting window...\n"));
+ 
+ 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_container_set_border_width (GTK_CONTAINER (window), 8);
+ 	gtk_window_set_position (GTK_WINDOW (window), GTK_WIN_POS_CENTER);
+ 	gtk_window_set_modal (GTK_WINDOW (window), TRUE);
+diff --git a/src/prefs_display_items.c b/src/prefs_display_items.c
+index bd554e3..55f2673 100644
+--- a/src/prefs_display_items.c
++++ b/src/prefs_display_items.c
+@@ -114,6 +114,7 @@ PrefsDisplayItemsDialog *prefs_display_items_dialog_create(void)
+ 	dialog = g_new0(PrefsDisplayItemsDialog, 1);
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+ 	gtk_window_set_position(GTK_WINDOW(window),
+ 				GTK_WIN_POS_CENTER_ON_PARENT);
+diff --git a/src/prefs_filter.c b/src/prefs_filter.c
+index 671aab3..3e20bf9 100644
+--- a/src/prefs_filter.c
++++ b/src/prefs_filter.c
+@@ -204,6 +204,7 @@ static void prefs_filter_create(void)
+ 	debug_print("Creating filter setting window...\n");
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+ 	gtk_widget_set_size_request(window, 540 * gtkut_get_dpi_multiplier(), 360 * gtkut_get_dpi_multiplier());
+ 	gtk_window_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+diff --git a/src/prefs_filter_edit.c b/src/prefs_filter_edit.c
+index 423924a..9a71087 100644
+--- a/src/prefs_filter_edit.c
++++ b/src/prefs_filter_edit.c
+@@ -219,6 +219,7 @@ static void prefs_filter_edit_create(void)
+ 	GtkWidget *confirm_area;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+ 	gtk_widget_set_size_request(window, 632 * gtkut_get_dpi_multiplier(), 405 * gtkut_get_dpi_multiplier());
+ 	gtk_window_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+@@ -1556,6 +1557,7 @@ static void prefs_filter_edit_edit_header_list_dialog_create(void)
+ 	gchar *title[1];
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+ 	gtk_window_position(GTK_WINDOW(window),GTK_WIN_POS_CENTER);
+ 	gtk_window_set_modal(GTK_WINDOW(window), TRUE);
+diff --git a/src/prefs_summary_column.c b/src/prefs_summary_column.c
+index 7b223b2..ce476d0 100644
+--- a/src/prefs_summary_column.c
++++ b/src/prefs_summary_column.c
+@@ -183,6 +183,7 @@ static void prefs_summary_column_create(void)
+ 	debug_print(_("Creating summary column setting window...\n"));
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+ 	gtk_window_set_position(GTK_WINDOW(window),
+ 				GTK_WIN_POS_CENTER_ON_PARENT);
+diff --git a/src/prefs_template.c b/src/prefs_template.c
+index a6a0b4b..a07e419 100644
+--- a/src/prefs_template.c
++++ b/src/prefs_template.c
+@@ -161,6 +161,7 @@ static void prefs_template_window_create(void)
+ 
+ 	/* main window */
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+ 	gtk_window_set_modal(GTK_WINDOW(window), TRUE);
+ 	gtk_window_set_policy(GTK_WINDOW(window), FALSE, TRUE, FALSE);
+diff --git a/src/prefs_ui.c b/src/prefs_ui.c
+index a3a8f74..e295162 100644
+--- a/src/prefs_ui.c
++++ b/src/prefs_ui.c
+@@ -56,6 +56,7 @@ void prefs_dialog_create(PrefsDialog *dialog)
+ 	g_return_if_fail(dialog != NULL);
+ 
+ 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_container_set_border_width (GTK_CONTAINER (window), 6);
+ 	gtk_window_set_position (GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+ 	gtk_window_set_modal (GTK_WINDOW (window), TRUE);
+diff --git a/src/progressdialog.c b/src/progressdialog.c
+index 2107da4..e8bee6f 100644
+--- a/src/progressdialog.c
++++ b/src/progressdialog.c
+@@ -131,6 +131,7 @@ ProgressDialog *progress_dialog_simple_create(void)
+ 	progress = g_new0(ProgressDialog, 1);
+ 
+ 	dialog = gtk_dialog_new();
++	gtkut_setup_immersive_dark_mode(dialog);
+ 	gtk_widget_set_size_request(dialog, PROGRESS_DIALOG_WIDTH * gtkut_get_dpi_multiplier(), -1);
+ 	gtk_container_set_border_width(GTK_CONTAINER(dialog), 8);
+ 	gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_CENTER);
+diff --git a/src/query_search.c b/src/query_search.c
+index 0b6170e..311ce7c 100644
+--- a/src/query_search.c
++++ b/src/query_search.c
+@@ -345,6 +345,7 @@ static void query_search_create(void)
+ 	GtkUIManager *ui;
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title(GTK_WINDOW (window), _("Search messages"));
+ 	gtk_widget_set_size_request(window, 600 * gtkut_get_dpi_multiplier(), -1);
+ 	gtk_window_set_policy(GTK_WINDOW(window), FALSE, TRUE, TRUE);
+@@ -1141,6 +1142,7 @@ static QuerySearchSaveDialog *query_search_save_dialog_create(void)
+ 	dialog = g_new0(QuerySearchSaveDialog, 1);
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Save as search folder"));
+ 	gtk_widget_set_size_request(window, 400 * gtkut_get_dpi_multiplier(), -1);
+ 	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
+diff --git a/src/rpop3.c b/src/rpop3.c
+index 571671f..17bbe23 100644
+--- a/src/rpop3.c
++++ b/src/rpop3.c
+@@ -354,6 +354,7 @@ static void rpop3_window_create(PrefsAccount *account)
+ 	gchar buf[BUFFSIZE];
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	g_snprintf(buf, sizeof(buf), _("%s - POP3 Remote mailbox"),
+ 		   account->account_name ? account->account_name : "");
+ 	gtk_window_set_title(GTK_WINDOW(window), buf);
+diff --git a/src/select-keys.c b/src/select-keys.c
+index 36c8edc..8b23ec5 100644
+--- a/src/select-keys.c
++++ b/src/select-keys.c
+@@ -279,6 +279,7 @@ create_dialog (struct select_keys_s *sk)
+ 
+     g_assert (!sk->window);
+     window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
++    gtkut_setup_immersive_dark_mode(window);
+     gtk_widget_set_size_request (window, 520, 280);
+     gtk_container_set_border_width (GTK_CONTAINER (window), 8);
+     gtk_window_set_title (GTK_WINDOW (window), _("Select encryption keys"));
+diff --git a/src/setup.c b/src/setup.c
+index c8e560f..26c9392 100644
+--- a/src/setup.c
++++ b/src/setup.c
+@@ -124,6 +124,7 @@ void setup_mailbox(void)
+ 	manage_window_focus_in(mainwin->window, NULL, NULL);
+ 
+ 	dialog = gtk_dialog_new();
++	gtkut_setup_immersive_dark_mode(dialog);
+ 	gtk_window_set_title(GTK_WINDOW(dialog), _("Mailbox setting"));
+ 	gtk_window_set_policy(GTK_WINDOW(dialog), FALSE, TRUE, FALSE);
+ 	gtk_widget_set_size_request(dialog, 540 * gtkut_get_dpi_multiplier(), -1);
+@@ -732,6 +733,7 @@ PrefsAccount *setup_account(void)
+ 	manage_window_focus_in(mainwin->window, NULL, NULL);
+ 
+ 	dialog = gtk_dialog_new_with_buttons(_("New account setup"), NULL, GTK_DIALOG_MODAL, NULL);
++	gtkut_setup_immersive_dark_mode(dialog);
+ 	setupac.dialog = dialog;
+ 
+ 	setupac.prev_btn = gtk_dialog_add_button(GTK_DIALOG(dialog), GTK_STOCK_GO_BACK, GTK_RESPONSE_REJECT);
+diff --git a/src/sigstatus.c b/src/sigstatus.c
+index 4f777e7..b0f2b05 100644
+--- a/src/sigstatus.c
++++ b/src/sigstatus.c
+@@ -111,6 +111,7 @@ GpgmegtkSigStatus gpgmegtk_sig_status_create(void)
+ 	hd->running = 1;
+ 
+ 	window = gtk_dialog_new();
++	gtkut_setup_immersive_dark_mode(window);
+ 	hd->mainwindow = window;
+ 	gtk_widget_set_size_request(window, 400, -1);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Signature check result"));
+diff --git a/src/sourcewindow.c b/src/sourcewindow.c
+index b1926fe..27e1127 100644
+--- a/src/sourcewindow.c
++++ b/src/sourcewindow.c
+@@ -66,6 +66,7 @@ SourceWindow *source_window_create(void)
+ 	sourcewin = g_new0(SourceWindow, 1);
+ 
+ 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
++	gtkut_setup_immersive_dark_mode(window);
+ 	gtk_window_set_title(GTK_WINDOW(window), _("Source of the message"));
+ 	gtk_window_set_wmclass(GTK_WINDOW(window), "source_window", "Sylpheed");
+ 	gtk_window_set_policy(GTK_WINDOW(window), TRUE, TRUE, FALSE);
+diff --git a/src/sslmanager.c b/src/sslmanager.c
+index a633710..cc56bd3 100644
+--- a/src/sslmanager.c
++++ b/src/sslmanager.c
+@@ -34,6 +34,7 @@
+ #include <gtk/gtkimage.h>
+ #include <gtk/gtklabel.h>
+ 
++#include "gtkutils.h"
+ #include "ssl.h"
+ #include "sslmanager.h"
+ #include "manage_window.h"
+@@ -121,6 +122,7 @@ gint ssl_manager_verify_cert(SockInfo *sockinfo, const gchar *hostname,
+ 		OPENSSL_free(subject);
+ 
+ 	dialog = gtk_dialog_new();
++	gtkut_setup_immersive_dark_mode(dialog);
+ 	gtk_window_set_title(GTK_WINDOW(dialog), title);
+ 	gtk_window_set_policy(GTK_WINDOW(dialog), FALSE, FALSE, FALSE);
+ 	gtk_window_set_position(GTK_WINDOW(dialog),
+diff --git a/src/subscribedialog.c b/src/subscribedialog.c
+index 902fc35..413a0b5 100644
+--- a/src/subscribedialog.c
++++ b/src/subscribedialog.c
+@@ -193,6 +193,7 @@ static void subscribe_dialog_create(void)
+ 	GtkTreeSelection *selection;
+ 
+ 	dialog = gtk_dialog_new();
++	gtkut_setup_immersive_dark_mode(dialog);
+ 	gtk_window_set_policy(GTK_WINDOW(dialog), FALSE, TRUE, FALSE);
+ 	gtk_widget_set_size_request(dialog,
+ 				    SUBSCRIBE_DIALOG_WIDTH * gtkut_get_dpi_multiplier(),
+-- 
+2.50.1.windows.1
+
