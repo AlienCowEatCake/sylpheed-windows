@@ -79,6 +79,24 @@ static std::string wstring_to_utf8(const std::wstring &wstr)
     return strTo;
 }
 
+static std::string replace_all(std::string str, char from, char to)
+{
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != std::string::npos)
+        str.replace(start_pos++, 1, 1, to);
+    return str;
+}
+
+static std::string lang_enchant_to_ms(const std::string &str)
+{
+    return replace_all(str, '_', '-');
+}
+
+static std::string lang_enchant_from_ms(const std::string &str)
+{
+    return replace_all(str, '-', '_');
+}
+
 struct _EnchantBroker
 {
     ISpellCheckerFactory *factory;
@@ -114,7 +132,7 @@ struct _EnchantDict
         if(!factory)
             return;
 
-        const std::wstring lang = utf8_to_wstring(tag);
+        const std::wstring lang = utf8_to_wstring(lang_enchant_to_ms(tag));
         if(FAILED(factory->CreateSpellChecker(lang.c_str(), &checker)) || !checker)
         {
             checker = NULL;
@@ -128,7 +146,7 @@ struct _EnchantDict
                 CoTaskMemFree(value);
             return;
         }
-        language = wstring_to_utf8(value);
+        language = lang_enchant_from_ms(wstring_to_utf8(value));
         CoTaskMemFree(value);
     }
 
@@ -197,6 +215,7 @@ int enchant_dict_check(EnchantDict *dict, const char *const word, ssize_t len)
     {
         if(value)
             value->Release();
+        dprintf("lang=%s, result=%s", dict->language.c_str(), "FAILED");
         return -1;
     }
 
@@ -349,7 +368,7 @@ void enchant_broker_list_dicts(EnchantBroker *broker, EnchantDictDescribeFn fn, 
                 CoTaskMemFree(str);
             break;
         }
-        const std::string lang = wstring_to_utf8(str);
+        const std::string lang = lang_enchant_from_ms(wstring_to_utf8(str));
         fn(lang.c_str(), "Microsoft", "MicrosoftSpellCheckerProvider", "spellcheck.h", user_data);
         CoTaskMemFree(str);
     }
