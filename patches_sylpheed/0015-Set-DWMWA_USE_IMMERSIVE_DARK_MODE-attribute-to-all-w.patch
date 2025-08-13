@@ -1,4 +1,4 @@
-From 634b62cbc9e53d6ef3f6479763facb1201de6ccb Mon Sep 17 00:00:00 2001
+From 75ed93b6c254d8a7c8780152b7d183f62cb0fa6d Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Thu, 14 Aug 2025 02:34:43 +0700
 Subject: [PATCH 15/15] Set DWMWA_USE_IMMERSIVE_DARK_MODE attribute to all
@@ -25,7 +25,7 @@ https://github.com/AlienCowEatCake/sylpheed-windows/issues/11
  src/filesel.c              |  1 +
  src/foldersel.c            |  1 +
  src/folderview.c           |  1 +
- src/gtkutils.c             | 26 ++++++++++++++++++++++++++
+ src/gtkutils.c             | 44 ++++++++++++++++++++++++++++++++++++++
  src/gtkutils.h             |  2 ++
  src/import.c               |  1 +
  src/importcsv.c            |  1 +
@@ -55,7 +55,7 @@ https://github.com/AlienCowEatCake/sylpheed-windows/issues/11
  src/sourcewindow.c         |  1 +
  src/sslmanager.c           |  2 ++
  src/subscribedialog.c      |  1 +
- 49 files changed, 88 insertions(+), 1 deletion(-)
+ 49 files changed, 106 insertions(+), 1 deletion(-)
 
 diff --git a/configure.ac b/configure.ac
 index 8522021..acecf15 100644
@@ -311,7 +311,7 @@ index dc9582c..8660246 100644
  	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
  	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
 diff --git a/src/gtkutils.c b/src/gtkutils.c
-index 33db071..643bca0 100644
+index 33db071..15770b3 100644
 --- a/src/gtkutils.c
 +++ b/src/gtkutils.c
 @@ -31,6 +31,8 @@
@@ -331,18 +331,36 @@ index 33db071..643bca0 100644
  		gtk_widget_ensure_style(window);
  		font_desc = pango_font_description_copy
  			(window->style->font_desc);
-@@ -1256,3 +1259,26 @@ gboolean gtkut_default_allsel(void)
+@@ -1256,3 +1259,44 @@ gboolean gtkut_default_allsel(void)
  	}
  	return FALSE;
  }
 +
 +#ifdef G_OS_WIN32
++static BOOL gtkut_win32_use_dark_theme(void)
++{
++	typedef BOOL(WINAPI *ShouldAppsUseDarkModeFunc)(void);
++	static ShouldAppsUseDarkModeFunc ShouldAppsUseDarkMode_func = NULL;
++	static BOOL is_initialized = FALSE;
++	if (!is_initialized) {
++		HMODULE hmodule = GetModuleHandleA("uxtheme");
++		if (hmodule) {
++			ShouldAppsUseDarkMode_func = (ShouldAppsUseDarkModeFunc)
++					GetProcAddress(hmodule, MAKEINTRESOURCEA(132));
++		}
++		is_initialized = TRUE;
++	}
++	if (ShouldAppsUseDarkMode_func)
++		return ShouldAppsUseDarkMode_func();
++	return FALSE;
++}
++
 +static void gtkut_on_window_realize_cb(GtkWidget *widget, gpointer data)
 +{
 +	GdkWindow *gdk_window = gtk_widget_get_window(widget);
 +	if (gdk_window) {
 +		HWND hwnd = GDK_WINDOW_HWND(gdk_window);
-+		BOOL enabled = TRUE;
++		BOOL enabled = gtkut_win32_use_dark_theme();
 +		DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &enabled, sizeof(BOOL));
 +	}
 +}
