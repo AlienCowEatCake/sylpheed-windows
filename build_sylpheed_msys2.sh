@@ -323,11 +323,7 @@ EOF
 
 function fixupExes() {
     pushd "${DIST_PREFIX}" > /dev/null
-    cat << EOF | cmd
-set VCVARS="$(getVCVARSPath)"
-call %VCVARS% ${VCVARS_ARCH}
-$(find . -maxdepth 1 \( -name 'curl.exe' -o -name 'sylfilter.exe' \) | sed 's|^\./|editbin /subsystem:windows |')
-EOF
+    find . -maxdepth 1 \( -name 'curl.exe' -o -name 'sylfilter.exe' \) -exec objcopy --subsystem windows \{\} \;
     popd > /dev/null
 }
 
