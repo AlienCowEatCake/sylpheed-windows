@@ -91,7 +91,7 @@ includedir=\${prefix}/include
 
 Name: libenchant
 Description: A spell checking library
-Version: 2.8.2
+Version: 2.8.12
 Libs: -L\${libdir} -lenchant-2
 Cflags: -I\${includedir}/enchant-2
 EOF
@@ -106,7 +106,7 @@ make -j$(getconf _NPROCESSORS_ONLN)
 make install
 cd ..
 
-curl -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.5/wintoastlibc_${VCVARS_ARCH##*_}.zip"
+curl -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.6/wintoastlibc_${VCVARS_ARCH##*_}.zip"
 unzip "wintoastlibc_${VCVARS_ARCH##*_}.zip"
 cd "$(echo "wintoastlibc_${VCVARS_ARCH##*_}.zip" | sed 's|\.zip$||')"
 cp -a *.h "${DIST_PREFIX}/include/"
@@ -122,9 +122,9 @@ rm -f "test_applink.c" "test_applink.exe"
 echo -e "\nUSE_OPENSSL_APPLINK=${USE_OPENSSL_APPLINK}\n"
 
 # @note https://github.com/AlienCowEatCake/sylpheed-windows/issues/4
-curl -LO https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-1.24.2.tar.bz2
-tar -xvpf gpgme-1.24.2.tar.bz2
-cd gpgme-1.24.2
+curl -LO https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-2.0.0.tar.bz2
+tar -xvpf gpgme-2.0.0.tar.bz2
+cd gpgme-2.0.0
 autoreconf -ivf
 DOXYGEN=/usr/bin/doxygen \
 PYTHON=${MINGW_PREFIX}/bin/python3 \
