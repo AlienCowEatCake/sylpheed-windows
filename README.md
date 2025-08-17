@@ -13,6 +13,17 @@ This project provides unofficial builds of Sylpheed with updated libraries and t
 * Support for color emoji and other features of modern unicode
 * Other bugfixes and improvements
 
+## Building from Source
+Prerequisites:
+- [MSYS2](https://www.msys2.org/)
+- [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) for CRT and UCRT redistributables
+
+You need to open MSYS2 terminal for `UCRT64`, `MINGW64`, `CLANG64` or `CLANGARM64` environment and run following command:
+```sh
+cd sylpheed-windows
+./build_sylpheed_msys2.sh
+```
+
 ## See also
 * https://sylpheed.sraoss.jp/en/
 * https://sylpheed.sraoss.jp/sylpheed/win32/
