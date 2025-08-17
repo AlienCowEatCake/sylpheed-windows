@@ -106,7 +106,7 @@ make -j$(getconf _NPROCESSORS_ONLN)
 make install
 cd ..
 
-curl -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.6/wintoastlibc_${VCVARS_ARCH##*_}.zip"
+curl -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.6-1/wintoastlibc_${VCVARS_ARCH##*_}.zip"
 unzip "wintoastlibc_${VCVARS_ARCH##*_}.zip"
 cd "$(echo "wintoastlibc_${VCVARS_ARCH##*_}.zip" | sed 's|\.zip$||')"
 cp -a *.h "${DIST_PREFIX}/include/"
