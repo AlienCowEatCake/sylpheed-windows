@@ -1,7 +1,7 @@
-From 75ed93b6c254d8a7c8780152b7d183f62cb0fa6d Mon Sep 17 00:00:00 2001
+From 191e2c85ce15e447102bf4a5330237dafa278c9b Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Thu, 14 Aug 2025 02:34:43 +0700
-Subject: [PATCH 15/15] Set DWMWA_USE_IMMERSIVE_DARK_MODE attribute to all
+Subject: [PATCH 15/16] Set DWMWA_USE_IMMERSIVE_DARK_MODE attribute to all
  windows
 
 https://github.com/AlienCowEatCake/sylpheed-windows/issues/11
@@ -311,7 +311,7 @@ index dc9582c..8660246 100644
  	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
  	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
 diff --git a/src/gtkutils.c b/src/gtkutils.c
-index 33db071..15770b3 100644
+index 33db071..2e45be2 100644
 --- a/src/gtkutils.c
 +++ b/src/gtkutils.c
 @@ -31,6 +31,8 @@
@@ -339,7 +339,7 @@ index 33db071..15770b3 100644
 +#ifdef G_OS_WIN32
 +static BOOL gtkut_win32_use_dark_theme(void)
 +{
-+	typedef BOOL(WINAPI *ShouldAppsUseDarkModeFunc)(void);
++	typedef BOOLEAN(WINAPI *ShouldAppsUseDarkModeFunc)(void);
 +	static ShouldAppsUseDarkModeFunc ShouldAppsUseDarkMode_func = NULL;
 +	static BOOL is_initialized = FALSE;
 +	if (!is_initialized) {
@@ -351,7 +351,7 @@ index 33db071..15770b3 100644
 +		is_initialized = TRUE;
 +	}
 +	if (ShouldAppsUseDarkMode_func)
-+		return ShouldAppsUseDarkMode_func();
++		return !!ShouldAppsUseDarkMode_func();
 +	return FALSE;
 +}
 +
