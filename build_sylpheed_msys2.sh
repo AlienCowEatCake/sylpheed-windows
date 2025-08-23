@@ -99,7 +99,7 @@ EOF
 curl -LO http://ftp.xemacs.org/pub/xemacs/aux/compface-1.5.2.tar.gz
 tar -xvpf compface-1.5.2.tar.gz
 cd compface-1.5.2
-find "${SOURCE_DIR}/patches/compface-1.5.2" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
+find "${SOURCE_DIR}/patches/compface" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
 autoreconf -ivf
 ./configure --prefix="${DIST_PREFIX}"
 make -j$(getconf _NPROCESSORS_ONLN)
@@ -148,7 +148,7 @@ cd ../..
 curl -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.bz2
 tar -xvpf sylpheed-3.8.0beta1.tar.bz2
 cd sylpheed-3.8.0beta1
-find "${SOURCE_DIR}/patches_sylpheed" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
+find "${SOURCE_DIR}/patches/sylpheed" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
 cp -a "${SOURCE_DIR}/misc/sylpheed.ico" "src/icons/sylpheed.ico"
 autogenSylpheed \
     --prefix="${DIST_PREFIX}" \
