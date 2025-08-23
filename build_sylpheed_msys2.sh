@@ -199,7 +199,8 @@ cd ..
 curl -LO http://sylpheed.sraoss.jp/sylfilter/src/sylfilter-0.8.tar.gz
 tar -xvpf sylfilter-0.8.tar.gz
 cd sylfilter-0.8
-find "${SOURCE_DIR}/patches_sylfilter" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
+cp -a /usr/share/gettext/config.rpath ./
+autoreconf -ivf
 ./configure \
     --prefix="${DIST_PREFIX}" \
     --disable-dependency-tracking \
