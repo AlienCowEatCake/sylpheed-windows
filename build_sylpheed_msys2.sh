@@ -96,7 +96,8 @@ Libs: -L\${libdir} -lenchant-2
 Cflags: -I\${includedir}/enchant-2
 EOF
 
-curl --retry 5 --fail -LO http://ftp.xemacs.org/pub/xemacs/aux/compface-1.5.2.tar.gz
+#curl --retry 5 --fail -LO http://ftp.xemacs.org/pub/xemacs/aux/compface-1.5.2.tar.gz
+cp -a "${SOURCE_DIR}/sources/compface-1.5.2.tar.gz" ./
 tar -xvpf compface-1.5.2.tar.gz
 cd compface-1.5.2
 find "${SOURCE_DIR}/patches/compface" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
@@ -106,7 +107,8 @@ make -j$(getconf _NPROCESSORS_ONLN)
 make install
 cd ..
 
-curl --retry 5 --fail -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.6-1/wintoastlibc_${VCVARS_ARCH##*_}.zip"
+#curl --retry 5 --fail -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.6-1/wintoastlibc_${VCVARS_ARCH##*_}.zip"
+cp -a "${SOURCE_DIR}/sources/wintoastlibc_${VCVARS_ARCH##*_}.zip" ./
 unzip "wintoastlibc_${VCVARS_ARCH##*_}.zip"
 cd "$(echo "wintoastlibc_${VCVARS_ARCH##*_}.zip" | sed 's|\.zip$||')"
 cp -a *.h "${DIST_PREFIX}/include/"
@@ -122,7 +124,8 @@ rm -f "test_applink.c" "test_applink.exe"
 echo -e "\nUSE_OPENSSL_APPLINK=${USE_OPENSSL_APPLINK}\n"
 
 # @note https://github.com/AlienCowEatCake/sylpheed-windows/issues/4
-curl --retry 5 --fail -LO https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-2.0.1.tar.bz2
+#curl --retry 5 --fail -LO https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-2.0.1.tar.bz2
+cp -a "${SOURCE_DIR}/sources/gpgme-2.0.1.tar.bz2" ./
 tar -xvpf gpgme-2.0.1.tar.bz2
 cd gpgme-2.0.1
 autoreconf -ivf
@@ -145,8 +148,9 @@ make -j$(getconf _NPROCESSORS_ONLN)
 make install-strip
 cd ../..
 
-curl --retry 5 --fail -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.bz2
-tar -xvpf sylpheed-3.8.0beta1.tar.bz2
+#curl --retry 5 --fail -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.xz
+cp -a "${SOURCE_DIR}/sources/sylpheed-3.8.0beta1.tar.xz" ./
+tar -xvpf sylpheed-3.8.0beta1.tar.xz
 cd sylpheed-3.8.0beta1
 find "${SOURCE_DIR}/patches/sylpheed" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
 cp -a "${SOURCE_DIR}/misc/sylpheed.ico" "src/icons/sylpheed.ico"
@@ -176,7 +180,8 @@ strip "${DIST_PREFIX}/lib/sylpheed/plugins/attachment_tool.dll"
 # strip "${DIST_PREFIX}/lib/sylpheed/plugins/test.dll"
 cd ..
 
-curl --retry 5 --fail -Lo qdbm-1.8.78.tar.gz https://snapshot.debian.org/archive/debian/20111016T212433Z/pool/main/q/qdbm/qdbm_1.8.78.orig.tar.gz
+#curl --retry 5 --fail -Lo qdbm-1.8.78.tar.gz https://snapshot.debian.org/archive/debian/20111016T212433Z/pool/main/q/qdbm/qdbm_1.8.78.orig.tar.gz
+cp -a "${SOURCE_DIR}/sources/qdbm-1.8.78.tar.gz" ./
 tar -xvpf qdbm-1.8.78.tar.gz
 cd qdbm-1.8.78
 ./configure --prefix="${DIST_PREFIX}" --enable-stable --enable-pthread --enable-zlib --enable-iconv
@@ -196,7 +201,8 @@ Cflags: -I${DIST_PREFIX}/include -DQDBM_STATIC
 EOF
 cd ..
 
-curl --retry 5 --fail -LO http://sylpheed.sraoss.jp/sylfilter/src/sylfilter-0.8.tar.gz
+#curl --retry 5 --fail -LO http://sylpheed.sraoss.jp/sylfilter/src/sylfilter-0.8.tar.gz
+cp -a "${SOURCE_DIR}/sources/sylfilter-0.8.tar.gz" ./
 tar -xvpf sylfilter-0.8.tar.gz
 cd sylfilter-0.8
 cp -a /usr/share/gettext/config.rpath ./
@@ -220,7 +226,8 @@ cc ${CPPFLAGS} ${CFLAGS} \
     -o "${DIST_PREFIX}/bin/sylfilter"
 cd ..
 
-curl --retry 5 --fail -Lo libwab-master.tar.gz https://github.com/pboettch/libwab/archive/refs/heads/master.tar.gz
+#curl --retry 5 --fail -Lo libwab-master.tar.gz https://github.com/pboettch/libwab/archive/refs/heads/master.tar.gz
+cp -a "${SOURCE_DIR}/sources/libwab-master.tar.gz" ./
 tar -xvpf libwab-master.tar.gz
 cd libwab-master
 cc ${CPPFLAGS} ${CFLAGS} \
@@ -229,7 +236,8 @@ cc ${CPPFLAGS} ${CFLAGS} \
     -DHAVE_ICONV -o "${DIST_PREFIX}/bin/wabread.exe" -s
 cd ..
 
-curl --retry 5 --fail -LO https://sylpheed.sraoss.jp/sylpheed/others/bsfilter-1.0.17.rc4.tgz
+#curl --retry 5 --fail -LO https://sylpheed.sraoss.jp/sylpheed/others/bsfilter-1.0.17.rc4.tgz
+cp -a "${SOURCE_DIR}/sources/bsfilter-1.0.17.rc4.tgz" ./
 tar -xvpf bsfilter-1.0.17.rc4.tgz
 cd bsfilter-1.0.17.rc4
 cp -a bsfilter/bsfilter bsfilter/bsfilterw.exe "${DIST_PREFIX}/bin/"
