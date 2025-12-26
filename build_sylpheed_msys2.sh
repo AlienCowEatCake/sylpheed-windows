@@ -91,7 +91,7 @@ includedir=\${prefix}/include
 
 Name: libenchant
 Description: A spell checking library
-Version: 2.8.12
+Version: 2.8.14
 Libs: -L\${libdir} -lenchant-2
 Cflags: -I\${includedir}/enchant-2
 EOF
@@ -122,9 +122,9 @@ rm -f "test_applink.c" "test_applink.exe"
 echo -e "\nUSE_OPENSSL_APPLINK=${USE_OPENSSL_APPLINK}\n"
 
 # @note https://github.com/AlienCowEatCake/sylpheed-windows/issues/4
-curl --retry 5 --fail -LO https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-2.0.0.tar.bz2
-tar -xvpf gpgme-2.0.0.tar.bz2
-cd gpgme-2.0.0
+curl --retry 5 --fail -LO https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-2.0.1.tar.bz2
+tar -xvpf gpgme-2.0.1.tar.bz2
+cd gpgme-2.0.1
 autoreconf -ivf
 DOXYGEN=/usr/bin/doxygen \
 PYTHON=${MINGW_PREFIX}/bin/python3 \
