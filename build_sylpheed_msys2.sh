@@ -93,7 +93,7 @@ includedir=\${prefix}/include
 
 Name: libenchant
 Description: A spell checking library
-Version: 2.8.14
+Version: 2.8.15
 Libs: -L\${libdir} -lenchant-2
 Cflags: -I\${includedir}/enchant-2
 EOF
