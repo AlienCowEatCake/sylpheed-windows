@@ -333,10 +333,12 @@ function copyDlls() {
                 continue
             fi
             for j in "${@}" ; do
-                if find "${j}" -maxdepth 1 -name "${i}" -print -exec cp -a \{\} "${DIST_PREFIX}/" \; | grep -E '*' ; then
-                    CHANGED=true
-                    RESOLVED=true
-                    break
+                if [ ! -z "${j}" -a -d "${j}" ] ; then
+                    if find "${j}" -maxdepth 1 -name "${i}" -print -exec cp -a \{\} "${DIST_PREFIX}/" \; | grep -E '*' ; then
+                        CHANGED=true
+                        RESOLVED=true
+                        break
+                    fi
                 fi
             done
             if ! ${RESOLVED} ; then
