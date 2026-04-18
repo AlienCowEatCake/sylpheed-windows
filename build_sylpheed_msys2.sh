@@ -104,6 +104,7 @@ tar -xvpf compface-1.5.2.tar.gz
 cd compface-1.5.2
 find "${SOURCE_DIR}/patches/compface" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
 autoreconf -ivf
+CFLAGS="${CFLAGS} -std=gnu89" \
 ./configure --prefix="${DIST_PREFIX}"
 make -j$(getconf _NPROCESSORS_ONLN)
 make install
