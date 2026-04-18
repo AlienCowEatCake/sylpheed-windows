@@ -41,6 +41,8 @@ pacman -S --needed --noconfirm \
     zip \
     unzip \
     ${MSYSTEM_PKG_PREFIX}-toolchain \
+    ${MSYSTEM_PKG_PREFIX}-autotools \
+    ${MSYSTEM_PKG_PREFIX}-gobject-introspection \
     ${MSYSTEM_PKG_PREFIX}-gtk2 \
     ${MSYSTEM_PKG_PREFIX}-curl \
     ${MSYSTEM_PKG_PREFIX}-openssl \
@@ -147,6 +149,32 @@ cd src
 make -j$(getconf _NPROCESSORS_ONLN)
 make install-strip
 cd ../..
+
+# @note https://github.com/AlienCowEatCake/sylpheed-windows/issues/12
+#curl --retry 5 --fail -LO https://download.gnome.org/sources/gtk+/2.24/gtk+-2.24.33.tar.xz
+cp -a "${SOURCE_DIR}/sources/gtk+-2.24.33.tar.xz" ./
+tar -xvpf gtk+-2.24.33.tar.xz
+cd gtk+-2.24.33
+find "${SOURCE_DIR}/patches/gtk+-2.0" -name '*.patch' | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
+autoreconf -ivf
+CFLAGS="${CFLAGS} -Wno-implicit-function-declaration" \
+./configure \
+    --prefix=${MINGW_PREFIX} \
+    --build=${MINGW_CHOST} \
+    --host=${MINGW_CHOST} \
+    --with-gdktarget=win32 \
+    --disable-modules \
+    --disable-cups \
+    --disable-papi \
+    --disable-static \
+    --enable-shared \
+    --enable-introspection \
+    --disable-glibtest \
+    --disable-visibility \
+    --with-included-immodules=ime
+make -j$(getconf _NPROCESSORS_ONLN)
+cp -a gdk/.libs/*.dll gtk/.libs/*.dll "${DIST_PREFIX}/bin/"
+cd ..
 
 #curl --retry 5 --fail -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.xz
 cp -a "${SOURCE_DIR}/sources/sylpheed-3.8.0beta1.tar.xz" ./

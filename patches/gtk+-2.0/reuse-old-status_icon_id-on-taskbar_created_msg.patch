@@ -1,0 +1,26 @@
+From 68acd9942b9f0d361c5ee24cfa00ebba5e09900f Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Sun, 22 Mar 2026 07:23:34 +0700
+Subject: [PATCH] Reuse old status_icon_id on taskbar_created_msg
+
+https://github.com/AlienCowEatCake/sylpheed-windows/issues/12
+---
+ gtk/gtkstatusicon.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gtk/gtkstatusicon.c b/gtk/gtkstatusicon.c
+index 68561fa73f..c094aa1f0d 100644
+--- a/gtk/gtkstatusicon.c
++++ b/gtk/gtkstatusicon.c
+@@ -728,7 +728,7 @@ wndproc (HWND   hwnd,
+ 	  }
+ 
+ 	  priv->nid.hWnd = hwnd;
+-	  priv->nid.uID = status_icon_id++;
++	  /*priv->nid.uID = status_icon_id++;*/
+ 	  priv->nid.uCallbackMessage = WM_GTK_TRAY_NOTIFICATION;
+ 	  priv->nid.uFlags = NIF_MESSAGE;
+ 
+-- 
+2.53.0.windows.1
+
