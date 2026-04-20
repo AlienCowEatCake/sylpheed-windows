@@ -1,7 +1,7 @@
-From e5ced4722ea4965357e0a70c2acc19a13d3223a4 Mon Sep 17 00:00:00 2001
+From 2fd402bd04b2f4421426407a6e5d30b5fbc139a7 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Fri, 23 Jun 2023 04:35:10 +0700
-Subject: [PATCH 13/13] Fix Windows architecture in About dialog
+Subject: [PATCH 27/29] Fix Windows architecture in About dialog
 
 ---
  src/about.c | 22 ++++++++++++++++++++--
@@ -43,5 +43,5 @@ index cfbbc2f..7d3bbb4 100644
  	g_snprintf(buf, sizeof(buf),
  		   "GTK+ %d.%d.%d / GLib %d.%d.%d\n"
 -- 
-2.30.2
+2.53.0
 

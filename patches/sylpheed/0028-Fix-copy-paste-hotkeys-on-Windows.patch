@@ -1,7 +1,7 @@
-From fa42c5d131371ad3ea5772f4158b02ba15a1101c Mon Sep 17 00:00:00 2001
+From e4aabb4cc6059fd6cc9bb7f62e30f41af410a7c6 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Sat, 17 Feb 2024 20:25:50 +0700
-Subject: [PATCH 14/14] Fix copy-paste hotkeys on Windows
+Subject: [PATCH 28/29] Fix copy-paste hotkeys on Windows
 
 ---
  src/addressbook.c |  56 +++++++++++++++++++
@@ -104,10 +104,10 @@ index 592050d..5e62274 100644
  {
  	addressbook_close();
 diff --git a/src/compose.c b/src/compose.c
-index 42838fd..4e90b46 100644
+index 6980cd3..263f044 100644
 --- a/src/compose.c
 +++ b/src/compose.c
-@@ -7963,11 +7963,14 @@ static void compose_redo_cb(Compose *compose)
+@@ -7965,11 +7965,14 @@ static void compose_redo_cb(Compose *compose)
  
  static void compose_cut_cb(Compose *compose)
  {
@@ -123,7 +123,7 @@ index 42838fd..4e90b46 100644
  		} else if (GTK_IS_TEXT_VIEW(compose->focused_editable)) {
  			GtkTextView *text = GTK_TEXT_VIEW(compose->text);
  			GtkTextBuffer *buffer;
-@@ -7977,17 +7980,22 @@ static void compose_cut_cb(Compose *compose)
+@@ -7979,17 +7982,22 @@ static void compose_cut_cb(Compose *compose)
  			clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
  
  			gtk_text_buffer_cut_clipboard(buffer, clipboard, TRUE);
@@ -147,7 +147,7 @@ index 42838fd..4e90b46 100644
  		} else if (GTK_IS_TEXT_VIEW(compose->focused_editable)) {
  			GtkTextView *text = GTK_TEXT_VIEW(compose->text);
  			GtkTextBuffer *buffer;
-@@ -7997,17 +8005,22 @@ static void compose_copy_cb(Compose *compose)
+@@ -7999,17 +8007,22 @@ static void compose_copy_cb(Compose *compose)
  			clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
  
  			gtk_text_buffer_copy_clipboard(buffer, clipboard);
@@ -171,7 +171,7 @@ index 42838fd..4e90b46 100644
  		} else if (GTK_IS_TEXT_VIEW(compose->focused_editable)) {
  			GtkTextView *text = GTK_TEXT_VIEW(compose->text);
  			GtkTextBuffer *buffer;
-@@ -8022,8 +8035,10 @@ static void compose_paste_cb(Compose *compose)
+@@ -8024,8 +8037,10 @@ static void compose_paste_cb(Compose *compose)
  							NULL, TRUE);
  
  			gtk_text_view_scroll_mark_onscreen(text, mark);
@@ -182,7 +182,7 @@ index 42838fd..4e90b46 100644
  }
  
  static void compose_paste_as_quote_cb(Compose *compose)
-@@ -8055,12 +8070,15 @@ static void compose_paste_as_quote_cb(Compose *compose)
+@@ -8057,12 +8072,15 @@ static void compose_paste_as_quote_cb(Compose *compose)
  
  static void compose_allsel_cb(Compose *compose)
  {
@@ -199,7 +199,7 @@ index 42838fd..4e90b46 100644
  		} else if (GTK_IS_TEXT_VIEW(compose->focused_editable)) {
  			GtkTextView *text = GTK_TEXT_VIEW(compose->text);
  			GtkTextBuffer *buffer;
-@@ -8072,8 +8090,10 @@ static void compose_allsel_cb(Compose *compose)
+@@ -8074,8 +8092,10 @@ static void compose_allsel_cb(Compose *compose)
  			gtk_text_buffer_get_end_iter(buffer, &iter);
  			gtk_text_buffer_move_mark_by_name
  				(buffer, "selection_bound", &iter);
@@ -453,5 +453,5 @@ index bc7e713..786363e 100644
  		summary_select_all(mainwin->summaryview);
  	else if (GTK_WIDGET_HAS_FOCUS(mainwin->summaryview->qsearch->entry))
 -- 
-2.44.0
+2.53.0
 

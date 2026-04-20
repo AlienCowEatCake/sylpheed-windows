@@ -1,7 +1,7 @@
-From 191e2c85ce15e447102bf4a5330237dafa278c9b Mon Sep 17 00:00:00 2001
+From 8f10b22307dd68e946a8da8de9742a7d27590bc8 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Thu, 14 Aug 2025 02:34:43 +0700
-Subject: [PATCH 15/16] Set DWMWA_USE_IMMERSIVE_DARK_MODE attribute to all
+Subject: [PATCH 29/29] Set DWMWA_USE_IMMERSIVE_DARK_MODE attribute to all
  windows
 
 https://github.com/AlienCowEatCake/sylpheed-windows/issues/11
@@ -58,7 +58,7 @@ https://github.com/AlienCowEatCake/sylpheed-windows/issues/11
  49 files changed, 106 insertions(+), 1 deletion(-)
 
 diff --git a/configure.ac b/configure.ac
-index 8522021..acecf15 100644
+index 9415cf8..25452e0 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -87,7 +87,7 @@ case "$target" in
@@ -151,7 +151,7 @@ index 723125e..58cc151 100644
  	gtk_window_set_policy(GTK_WINDOW(dialog), FALSE, FALSE, FALSE);
  	gtk_window_set_position(GTK_WINDOW(dialog),
 diff --git a/src/compose.c b/src/compose.c
-index 4e90b46..7bf576e 100644
+index 263f044..992fe50 100644
 --- a/src/compose.c
 +++ b/src/compose.c
 @@ -3268,6 +3268,7 @@ static gboolean compose_check_recipients(Compose *compose)
@@ -170,7 +170,7 @@ index 4e90b46..7bf576e 100644
  	gtk_window_set_wmclass(GTK_WINDOW(window), "compose", "Sylpheed");
  	gtk_window_set_policy(GTK_WINDOW(window), TRUE, TRUE, FALSE);
  	gtk_widget_set_size_request(window, -1, prefs_common.compose_height);
-@@ -6885,6 +6887,7 @@ static void compose_attach_property_create(gboolean *cancelled)
+@@ -6887,6 +6889,7 @@ static void compose_attach_property_create(gboolean *cancelled)
  	debug_print("Creating attach property window...\n");
  
  	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -804,5 +804,5 @@ index 902fc35..413a0b5 100644
  	gtk_widget_set_size_request(dialog,
  				    SUBSCRIBE_DIALOG_WIDTH * gtkut_get_dpi_multiplier(),
 -- 
-2.50.1.windows.1
+2.53.0
 

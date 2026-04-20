@@ -1,8 +1,8 @@
-From d3648793837aa58c76dd365f725b5163d507810b Mon Sep 17 00:00:00 2001
+From 4e4eaca8b638d997983fe3d57c53e4ec5de29edc Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Sat, 18 Jun 2022 01:38:20 +0700
-Subject: [PATCH 06/11] join encoded multibyte headers splited not on
- character boundary
+Subject: [PATCH 13/29] join encoded multibyte headers splited not on character
+ boundary
 
 ================================================================================
 
@@ -78,8 +78,8 @@ LCBld29yZF9lbmRfcCArIDIgLSBwKTsKICAgICAgICAgICAgICAgICB9Cg==
 
 ================================================================================
 ---
- libsylph/unmime.c |   91 +++++++++++++++++++++++++++++++++++++++--------------
- 1 files changed, 67 insertions(+), 24 deletions(-)
+ libsylph/unmime.c | 91 ++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 67 insertions(+), 24 deletions(-)
 
 diff --git a/libsylph/unmime.c b/libsylph/unmime.c
 index 34a3d73..97bd08e 100644
@@ -239,5 +239,5 @@ index 34a3d73..97bd08e 100644
  	out_str = outbuf->str;
  	out_len = outbuf->len;
 -- 
-1.7.9
+2.53.0
 

@@ -1,11 +1,11 @@
-From c5744a58079a40b848b7afe985f0561b5ad3fe9a Mon Sep 17 00:00:00 2001
+From c830857142125b4338feb6fb864cb9c2e96b5c83 Mon Sep 17 00:00:00 2001
 From: Gustavo Noronha Silva <kov@debian.org>
 Date: Sun, 28 Jan 2018 18:20:19 +0900
-Subject: [PATCH 01/11] fix small bug in addressbook window
+Subject: [PATCH 01/29] fix small bug in addressbook window
 
 ---
- src/addressbook.c |   11 +++++++++++
- 1 files changed, 11 insertions(+), 0 deletions(-)
+ src/addressbook.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
 diff --git a/src/addressbook.c b/src/addressbook.c
 index b013507..592050d 100644
@@ -30,5 +30,5 @@ index b013507..592050d 100644
  		AddressObject *obj = node->data;
  		Compose *compose = addrbook.target_compose;
 -- 
-1.7.9
+2.53.0
 

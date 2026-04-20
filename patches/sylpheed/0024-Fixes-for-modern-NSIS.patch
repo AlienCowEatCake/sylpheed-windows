@@ -1,16 +1,16 @@
-From 3de343563292c031a72058941a09f01067d69a49 Mon Sep 17 00:00:00 2001
+From bed2d61301816ed92aa7fd2db78a0bfbd2f69ba8 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Wed, 30 Nov 2022 23:25:30 +0700
-Subject: [PATCH 09/11] Fixes for modern NSIS
+Subject: [PATCH 24/29] Fixes for modern NSIS
 
 ---
- nsis/japanese.nsh             |  122 ++++++++++++++++++++--------------------
- nsis/plugin-updater.nsi       |    4 +-
- nsis/spanish.nsh              |   16 +++---
- nsis/sylpheed-defs.nsh        |    2 +-
- nsis/sylpheed-un_sylpheed.nsh |   50 +++++++++++++++++
- nsis/sylpheed.nsi             |   62 +++-----------------
- nsis/update-manager.nsi       |    2 +
+ nsis/japanese.nsh             | 122 +++++++++++++++++-----------------
+ nsis/plugin-updater.nsi       |   4 +-
+ nsis/spanish.nsh              |  16 ++---
+ nsis/sylpheed-defs.nsh        |   2 +-
+ nsis/sylpheed-un_sylpheed.nsh |  50 ++++++++++++++
+ nsis/sylpheed.nsi             |  62 +++--------------
+ nsis/update-manager.nsi       |   2 +
  7 files changed, 135 insertions(+), 123 deletions(-)
  create mode 100644 nsis/sylpheed-un_sylpheed.nsh
 
@@ -396,5 +396,5 @@ index f79a8a6..2532207 100644
  
  ;--------------------------------
 -- 
-1.7.9
+2.53.0
 

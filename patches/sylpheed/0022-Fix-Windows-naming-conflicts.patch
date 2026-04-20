@@ -1,12 +1,12 @@
-From 963f0b8e19d40d4e7f5e4545573f8d6907a51903 Mon Sep 17 00:00:00 2001
+From b803852e8da0b1397bee07814083605bf5d54e18 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Mon, 28 Nov 2022 23:09:20 +0700
-Subject: [PATCH 07/11] Fix Windows naming conflicts
+Subject: [PATCH 22/29] Fix Windows naming conflicts
 
 ---
- src/filesel.c    |   12 ++++++++++++
- src/headerview.c |    3 +++
- 2 files changed, 15 insertions(+), 0 deletions(-)
+ src/filesel.c    | 12 ++++++++++++
+ src/headerview.c |  3 +++
+ 2 files changed, 15 insertions(+)
 
 diff --git a/src/filesel.c b/src/filesel.c
 index e4e3ecd..2c224c4 100644
@@ -51,5 +51,5 @@ index 984e8bc..8558884 100644
  
  #include "main.h"
 -- 
-1.7.9
+2.53.0
 
