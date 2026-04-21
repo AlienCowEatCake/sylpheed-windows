@@ -78,7 +78,16 @@ rm -rf "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
 
-c++ -O3 -std=c++14 -shared -fPIC -o "${DIST_PREFIX}/bin/libenchant-2.dll" -Wall \
+LIBENCHANT_DLL_NAME=
+for i in "libenchant-2-2.dll" "libenchant-2.dll" ; do
+    if [ -f "${MSYSTEM_PREFIX}/bin/${i}" ] ; then
+        LIBENCHANT_DLL_NAME="${i}"
+        break
+    fi
+done
+echo -e "\nLIBENCHANT_DLL_NAME=${LIBENCHANT_DLL_NAME}\n"
+test ! -z "${LIBENCHANT_DLL_NAME}"
+c++ -O3 -std=c++14 -shared -fPIC -o "${DIST_PREFIX}/bin/${LIBENCHANT_DLL_NAME}" -Wall \
     -Wl,--out-implib="${DIST_PREFIX}/lib/libenchant-2.dll.a" \
     -Wl,--export-all-symbols -Wl,--enable-auto-import \
     -Wl,--whole-archive "${SOURCE_DIR}/enchant/enchant.cpp" -Wl,--no-whole-archive \

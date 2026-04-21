@@ -1,5 +1,5 @@
 /*
-g++ -O3 -std=c++14 -shared -fPIC -o libenchant-2.dll -Wall \
+g++ -O3 -std=c++14 -shared -fPIC -o libenchant-2-2.dll -Wall \
     -Wl,--export-all-symbols -Wl,--enable-auto-import \
     -Wl,--whole-archive enchant.cpp -Wl,--no-whole-archive \
     -lole32 -s
