@@ -1,4 +1,4 @@
-From e4aabb4cc6059fd6cc9bb7f62e30f41af410a7c6 Mon Sep 17 00:00:00 2001
+From 02690d67d0c5e3e7e5b8fe45c1a1769df79a45e7 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Sat, 17 Feb 2024 20:25:50 +0700
 Subject: [PATCH 28/29] Fix copy-paste hotkeys on Windows
@@ -211,14 +211,13 @@ index 6980cd3..263f044 100644
  
  static void compose_grab_focus_cb(GtkWidget *widget, Compose *compose)
 diff --git a/src/gtkutils.c b/src/gtkutils.c
-index b1a488a..33db071 100644
+index 8672016..0c8d55e 100644
 --- a/src/gtkutils.c
 +++ b/src/gtkutils.c
-@@ -1117,3 +1117,142 @@ void gtkut_events_flush(void)
- {
+@@ -1118,6 +1118,145 @@ void gtkut_events_flush(void)
  	GTK_EVENTS_FLUSH();
  }
-+
+ 
 +GtkWindow *gtkut_get_active_window(void)
 +{
 +	GList *window_list, *cur;
@@ -357,11 +356,15 @@ index b1a488a..33db071 100644
 +	}
 +	return FALSE;
 +}
++
+ /* ========== BEGIN CODE FROM GDK-PIXBUF 2.44.4 ========== */
+ 
+ #define gdk_pixbuf_new_from_xpm_data \
 diff --git a/src/gtkutils.h b/src/gtkutils.h
-index 1872e67..0434c2e 100644
+index 3b92d6d..583dc48 100644
 --- a/src/gtkutils.h
 +++ b/src/gtkutils.h
-@@ -235,4 +235,14 @@ void gtkut_widget_init			(void);
+@@ -235,6 +235,16 @@ void gtkut_widget_init			(void);
  
  void gtkut_events_flush			(void);
  
@@ -375,7 +378,9 @@ index 1872e67..0434c2e 100644
 +gboolean gtkut_default_paste		(void);
 +gboolean gtkut_default_allsel		(void);
 +
- #endif /* __GTKUTILS_H__ */
+ GdkPixmap *gtkut_pixmap_colormap_create_from_xpm_d
+ 					(GdkDrawable	*drawable,
+ 					 GdkColormap	*colormap,
 diff --git a/src/mainwindow.c b/src/mainwindow.c
 index bc7e713..786363e 100644
 --- a/src/mainwindow.c

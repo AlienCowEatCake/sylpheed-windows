@@ -1,4 +1,4 @@
-From 8f10b22307dd68e946a8da8de9742a7d27590bc8 Mon Sep 17 00:00:00 2001
+From aa191c6508eab83206cacf0633ccfaaf7c049f41 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Thu, 14 Aug 2025 02:34:43 +0700
 Subject: [PATCH 29/29] Set DWMWA_USE_IMMERSIVE_DARK_MODE attribute to all
@@ -311,7 +311,7 @@ index dc9582c..8660246 100644
  	gtk_container_set_border_width(GTK_CONTAINER(window), 8);
  	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
 diff --git a/src/gtkutils.c b/src/gtkutils.c
-index 33db071..2e45be2 100644
+index 0c8d55e..4372518 100644
 --- a/src/gtkutils.c
 +++ b/src/gtkutils.c
 @@ -31,6 +31,8 @@
@@ -331,11 +331,10 @@ index 33db071..2e45be2 100644
  		gtk_widget_ensure_style(window);
  		font_desc = pango_font_description_copy
  			(window->style->font_desc);
-@@ -1256,3 +1259,44 @@ gboolean gtkut_default_allsel(void)
- 	}
+@@ -1257,6 +1260,47 @@ gboolean gtkut_default_allsel(void)
  	return FALSE;
  }
-+
+ 
 +#ifdef G_OS_WIN32
 +static BOOL gtkut_win32_use_dark_theme(void)
 +{
@@ -376,17 +375,23 @@ index 33db071..2e45be2 100644
 +		gtkut_on_window_realize_cb(window, NULL);
 +#endif
 +}
++
+ /* ========== BEGIN CODE FROM GDK-PIXBUF 2.44.4 ========== */
+ 
+ #define gdk_pixbuf_new_from_xpm_data \
 diff --git a/src/gtkutils.h b/src/gtkutils.h
-index 0434c2e..3bd08cc 100644
+index 583dc48..48af4ad 100644
 --- a/src/gtkutils.h
 +++ b/src/gtkutils.h
-@@ -245,4 +245,6 @@ gboolean gtkut_default_copy		(void);
+@@ -245,6 +245,8 @@ gboolean gtkut_default_copy		(void);
  gboolean gtkut_default_paste		(void);
  gboolean gtkut_default_allsel		(void);
  
 +void gtkut_setup_immersive_dark_mode	(GtkWidget	*window);
 +
- #endif /* __GTKUTILS_H__ */
+ GdkPixmap *gtkut_pixmap_colormap_create_from_xpm_d
+ 					(GdkDrawable	*drawable,
+ 					 GdkColormap	*colormap,
 diff --git a/src/import.c b/src/import.c
 index b323270..f2fd6aa 100644
 --- a/src/import.c

@@ -1,4 +1,4 @@
-From b803852e8da0b1397bee07814083605bf5d54e18 Mon Sep 17 00:00:00 2001
+From d893167c479f9e10529e3006bacda4cca13ea7fb Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Mon, 28 Nov 2022 23:09:20 +0700
 Subject: [PATCH 22/29] Fix Windows naming conflicts
@@ -37,7 +37,7 @@ index e4e3ecd..2c224c4 100644
  
  #include "main.h"
 diff --git a/src/headerview.c b/src/headerview.c
-index 984e8bc..8558884 100644
+index c6e34a5..3e9635f 100644
 --- a/src/headerview.c
 +++ b/src/headerview.c
 @@ -41,6 +41,9 @@
