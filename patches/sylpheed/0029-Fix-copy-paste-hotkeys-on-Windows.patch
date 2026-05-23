@@ -1,7 +1,7 @@
-From 02690d67d0c5e3e7e5b8fe45c1a1769df79a45e7 Mon Sep 17 00:00:00 2001
+From 03c1d92936adb694368216cad150736924efb252 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Sat, 17 Feb 2024 20:25:50 +0700
-Subject: [PATCH 28/29] Fix copy-paste hotkeys on Windows
+Subject: [PATCH 29/30] Fix copy-paste hotkeys on Windows
 
 ---
  src/addressbook.c |  56 +++++++++++++++++++

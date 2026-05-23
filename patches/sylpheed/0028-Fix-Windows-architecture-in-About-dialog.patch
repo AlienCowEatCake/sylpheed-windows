@@ -1,7 +1,7 @@
-From 2fd402bd04b2f4421426407a6e5d30b5fbc139a7 Mon Sep 17 00:00:00 2001
+From b9cc2934d02d9df2364aa290a0cdb94175d3f21e Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Fri, 23 Jun 2023 04:35:10 +0700
-Subject: [PATCH 27/29] Fix Windows architecture in About dialog
+Subject: [PATCH 28/30] Fix Windows architecture in About dialog
 
 ---
  src/about.c | 22 ++++++++++++++++++++--

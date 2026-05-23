@@ -1,7 +1,7 @@
-From 824ed4496f7dfe95eb81d541b2ac22e796b24507 Mon Sep 17 00:00:00 2001
+From ef14d96479183c43c3e0a0356a0d5d2bb6ff51d8 Mon Sep 17 00:00:00 2001
 From: Peter Zhigalov <peter.zhigalov@gmail.com>
 Date: Thu, 1 Jun 2023 18:28:44 +0700
-Subject: [PATCH 26/29] Fix implicit function declarations
+Subject: [PATCH 27/30] Fix implicit function declarations
 
 ---
  libsylph/socket.h  | 1 +
@@ -50,7 +50,7 @@ index c2f4feb..c8e560f 100644
  #  include "ssl.h"
  #endif
 diff --git a/src/update_check.c b/src/update_check.c
-index 4fb8bbd..14182f5 100644
+index 24dcb81..81d7914 100644
 --- a/src/update_check.c
 +++ b/src/update_check.c
 @@ -37,6 +37,7 @@
