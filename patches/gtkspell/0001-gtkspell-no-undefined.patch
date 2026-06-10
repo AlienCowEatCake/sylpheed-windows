@@ -1,0 +1,24 @@
+From a0a488fcb98754bf4b68acf2859f1e3e9ba845a5 Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Mon, 5 Dec 2022 02:14:48 -0800
+Subject: [PATCH 1/5] gtkspell-no-undefined
+
+---
+ gtkspell/Makefile.am | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/gtkspell/Makefile.am b/gtkspell/Makefile.am
+index ee832cf..815577f 100644
+--- a/gtkspell/Makefile.am
++++ b/gtkspell/Makefile.am
+@@ -1,6 +1,7 @@
+ lib_LTLIBRARIES=libgtkspell.la
+ AM_CFLAGS=@GTKSPELL_CFLAGS@ -DG_LOG_DOMAIN=\"gtkspell\" -DLOCALEDIR=\""$(datadir)/locale"\"
+ libgtkspell_la_LIBADD=@GTKSPELL_LIBS@ @SPELLER_LIB@
++libgtkspell_la_LDFLAGS=-no-undefined
+ libgtkspell_la_includedir=$(includedir)/gtkspell-2.0/gtkspell
+ libgtkspell_la_include_HEADERS=gtkspell.h
+ libgtkspell_la_SOURCES=gtkspell.c deprecated.c gtkspell.h
+-- 
+2.38.1.windows.1
+

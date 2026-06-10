@@ -1,0 +1,84 @@
+From 6c1be2a02b7717ead1b3c3a00f33ae63ec8bde20 Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Mon, 5 Dec 2022 02:20:36 -0800
+Subject: [PATCH 4/5] +enchant-2
+
+---
+ configure | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/configure b/configure
+index f36dc28..cada5e7 100644
+--- a/configure
++++ b/configure
+@@ -2584,7 +2584,7 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
+ ac_config_headers="$ac_config_headers config.h"
+ 
+ 
+-SPELLER_LIB=-lenchant
++SPELLER_LIB=-lenchant-2
+ 
+ 
+ GTKSPELL_PACKAGES=gtk+-2.0
+@@ -2715,12 +2715,12 @@ if test -n "$PKG_CONFIG"; then
+         pkg_cv_GTKSPELL_CFLAGS="$GTKSPELL_CFLAGS"
+     else
+         if test -n "$PKG_CONFIG" && \
+-    { ($as_echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$GTKSPELL_PACKAGES enchant >= 0.4.0 \"") >&5
+-  ($PKG_CONFIG --exists --print-errors "$GTKSPELL_PACKAGES enchant >= 0.4.0 ") 2>&5
++    { ($as_echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$GTKSPELL_PACKAGES enchant-2 >= 2.2.0 \"") >&5
++  ($PKG_CONFIG --exists --print-errors "$GTKSPELL_PACKAGES enchant-2 >= 2.2.0 ") 2>&5
+   ac_status=$?
+   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); }; then
+-  pkg_cv_GTKSPELL_CFLAGS=`$PKG_CONFIG --cflags "$GTKSPELL_PACKAGES enchant >= 0.4.0 " 2>/dev/null`
++  pkg_cv_GTKSPELL_CFLAGS=`$PKG_CONFIG --cflags "$GTKSPELL_PACKAGES enchant-2 >= 2.2.0 " 2>/dev/null`
+ else
+   pkg_failed=yes
+ fi
+@@ -2733,12 +2733,12 @@ if test -n "$PKG_CONFIG"; then
+         pkg_cv_GTKSPELL_LIBS="$GTKSPELL_LIBS"
+     else
+         if test -n "$PKG_CONFIG" && \
+-    { ($as_echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$GTKSPELL_PACKAGES enchant >= 0.4.0 \"") >&5
+-  ($PKG_CONFIG --exists --print-errors "$GTKSPELL_PACKAGES enchant >= 0.4.0 ") 2>&5
++    { ($as_echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"\$GTKSPELL_PACKAGES enchant-2 >= 2.2.0 \"") >&5
++  ($PKG_CONFIG --exists --print-errors "$GTKSPELL_PACKAGES enchant-2 >= 2.2.0 ") 2>&5
+   ac_status=$?
+   $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); }; then
+-  pkg_cv_GTKSPELL_LIBS=`$PKG_CONFIG --libs "$GTKSPELL_PACKAGES enchant >= 0.4.0 " 2>/dev/null`
++  pkg_cv_GTKSPELL_LIBS=`$PKG_CONFIG --libs "$GTKSPELL_PACKAGES enchant-2 >= 2.2.0 " 2>/dev/null`
+ else
+   pkg_failed=yes
+ fi
+@@ -2757,14 +2757,14 @@ else
+         _pkg_short_errors_supported=no
+ fi
+         if test $_pkg_short_errors_supported = yes; then
+-	        GTKSPELL_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "$GTKSPELL_PACKAGES enchant >= 0.4.0 "`
++	        GTKSPELL_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "$GTKSPELL_PACKAGES enchant-2 >= 2.2.0 "`
+         else
+-	        GTKSPELL_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "$GTKSPELL_PACKAGES enchant >= 0.4.0 "`
++	        GTKSPELL_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "$GTKSPELL_PACKAGES enchant-2 >= 2.2.0 "`
+         fi
+ 	# Put the nasty error message in config.log where it belongs
+ 	echo "$GTKSPELL_PKG_ERRORS" >&5
+ 
+-	{ { $as_echo "$as_me:$LINENO: error: Package requirements ($GTKSPELL_PACKAGES enchant >= 0.4.0 ) were not met:
++	{ { $as_echo "$as_me:$LINENO: error: Package requirements ($GTKSPELL_PACKAGES enchant-2 >= 2.2.0 ) were not met:
+ 
+ $GTKSPELL_PKG_ERRORS
+ 
+@@ -2775,7 +2775,7 @@ Alternatively, you may set the environment variables GTKSPELL_CFLAGS
+ and GTKSPELL_LIBS to avoid the need to call pkg-config.
+ See the pkg-config man page for more details.
+ " >&5
+-$as_echo "$as_me: error: Package requirements ($GTKSPELL_PACKAGES enchant >= 0.4.0 ) were not met:
++$as_echo "$as_me: error: Package requirements ($GTKSPELL_PACKAGES enchant-2 >= 2.2.0 ) were not met:
+ 
+ $GTKSPELL_PKG_ERRORS
+ 
+-- 
+2.38.1.windows.1
+

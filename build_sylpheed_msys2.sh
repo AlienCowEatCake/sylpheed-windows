@@ -40,13 +40,14 @@ pacman -S --needed --noconfirm \
     libgpgme-devel \
     zip \
     unzip \
+    intltool \
     ${MSYSTEM_PKG_PREFIX}-toolchain \
     ${MSYSTEM_PKG_PREFIX}-autotools \
     ${MSYSTEM_PKG_PREFIX}-gobject-introspection \
     ${MSYSTEM_PKG_PREFIX}-gtk2 \
     ${MSYSTEM_PKG_PREFIX}-curl \
     ${MSYSTEM_PKG_PREFIX}-openssl \
-    ${MSYSTEM_PKG_PREFIX}-gtkspell \
+    ${MSYSTEM_PKG_PREFIX}-enchant \
     ${MSYSTEM_PKG_PREFIX}-oniguruma \
     ${MSYSTEM_PKG_PREFIX}-libiconv \
     ${MSYSTEM_PKG_PREFIX}-ca-certificates \
@@ -184,6 +185,29 @@ CFLAGS="${CFLAGS} -Wno-implicit-function-declaration" \
     --with-included-immodules=ime
 make -j$(getconf _NPROCESSORS_ONLN)
 cp -a gdk/.libs/*.dll gtk/.libs/*.dll "${DIST_PREFIX}/bin/"
+cd ..
+
+#curl --retry 5 --fail -LO https://gtkspell.sourceforge.io/download/gtkspell-2.0.16.tar.gz
+cp -a "${SOURCE_DIR}/sources/gtkspell-2.0.16.tar.gz" ./
+tar -xvpf gtkspell-2.0.16.tar.gz
+cd gtkspell-2.0.16
+find "${SOURCE_DIR}/patches/gtkspell" \( -name '*.patch' -o -name '*.diff' \) | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
+./configure --prefix="${DIST_PREFIX}" --disable-dependency-tracking --enable-shared --disable-static
+make -j$(getconf _NPROCESSORS_ONLN)
+make install
+rm -rf "${DIST_PREFIX}/share/gtk-doc"
+if [ -f "${DIST_PREFIX}/lib/libgtkspell.a" ] ; then
+    mkdir temp
+    cd temp
+    ar x "${DIST_PREFIX}/lib/libgtkspell.a"
+    cc -shared -o "${DIST_PREFIX}/bin/libgtkspell-0.dll" \
+        -Wl,--out-implib="${DIST_PREFIX}/lib/libgtkspell.dll.a" \
+        -Wl,--export-all-symbols -Wl,--enable-auto-import \
+        -Wl,--whole-archive *.o -Wl,--no-whole-archive \
+        $(pkg-config --libs gtk+-2.0) $(pkg-config --libs enchant-2)
+    rm -rf "${DIST_PREFIX}/lib/libgtkspell.a" "${DIST_PREFIX}/lib/libgtkspell.la"
+    cd ..
+fi
 cd ..
 
 #curl --retry 5 --fail -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.xz
