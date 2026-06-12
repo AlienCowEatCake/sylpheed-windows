@@ -1,0 +1,705 @@
+From 00bdd5fec8bcf873ac3a576b27bbe4bdcaf59954 Mon Sep 17 00:00:00 2001
+From: Peter Zhigalov <peter.zhigalov@gmail.com>
+Date: Thu, 11 Jun 2026 00:18:56 +0700
+Subject: [PATCH] Backport file dialog date time formatting from GTK3
+
+---
+ gtk/gtkfilechooserdefault.c | 122 ++++++++++++------------------------
+ po/ca.po                    |   9 +++
+ po/cs.po                    |   9 +++
+ po/da.po                    |   9 +++
+ po/de.po                    |   9 +++
+ po/eo.po                    |   9 +++
+ po/eu.po                    |   9 +++
+ po/fa.po                    |   9 +++
+ po/fi.po                    |   9 +++
+ po/gl.po                    |   9 +++
+ po/he.po                    |   9 +++
+ po/hu.po                    |   9 +++
+ po/is.po                    |   9 +++
+ po/ja.po                    |   9 +++
+ po/ko.po                    |   9 +++
+ po/lt.po                    |   9 +++
+ po/lv.po                    |   9 +++
+ po/nb.po                    |   9 +++
+ po/pl.po                    |   9 +++
+ po/pt_BR.po                 |   9 +++
+ po/sk.po                    |   9 +++
+ po/sr.po                    |   9 +++
+ po/sr@latin.po              |   9 +++
+ po/th.po                    |   9 +++
+ po/ug.po                    |   9 +++
+ po/zh_CN.po                 |   9 +++
+ po/zh_TW.po                 |   9 +++
+ 27 files changed, 273 insertions(+), 83 deletions(-)
+
+diff --git a/gtk/gtkfilechooserdefault.c b/gtk/gtkfilechooserdefault.c
+index c11354248..fb64d8602 100644
+--- a/gtk/gtkfilechooserdefault.c
++++ b/gtk/gtkfilechooserdefault.c
+@@ -6542,103 +6542,59 @@ stop_loading_and_clear_list_model (GtkFileChooserDefault *impl,
+ static char *
+ my_g_format_time_for_display (glong secs)
+ {
+-  GDate mtime, now;
+-  gint days_diff;
+-  struct tm tm_mtime;
+-  time_t time_mtime, time_now;
++  GDateTime *now, *time;
++  GDateTime *now_date, *date;
+   const gchar *format;
+-  gchar *locale_format = NULL;
+-  gchar buf[256];
+-  char *date_str = NULL;
+-#ifdef G_OS_WIN32
+-  const char *locale, *dot = NULL;
+-  gint64 codepage = -1;
+-  char charset[20];
+-#endif
++  gchar *date_str;
++  gint days_ago;
+ 
+-  time_mtime = secs;
+-
+-#ifdef HAVE_LOCALTIME_R
+-  localtime_r ((time_t *) &time_mtime, &tm_mtime);
+-#else
+-  {
+-    struct tm *ptm = localtime ((time_t *) &time_mtime);
++  time = g_date_time_new_from_unix_local (secs);
++  date = g_date_time_new_local (g_date_time_get_year (time),
++                                g_date_time_get_month (time),
++                                g_date_time_get_day_of_month (time),
++                                0, 0, 0);
+ 
+-    if (!ptm)
+-      {
+-        g_warning ("ptm != NULL failed");
+-        
+-        return g_strdup (_("Unknown"));
+-      }
+-    else
+-      memcpy ((void *) &tm_mtime, (void *) ptm, sizeof (struct tm));
+-  }
+-#endif /* HAVE_LOCALTIME_R */
++  now = g_date_time_new_now_local ();
++  now_date = g_date_time_new_local (g_date_time_get_year (now),
++                                    g_date_time_get_month (now),
++                                    g_date_time_get_day_of_month (now),
++                                    0, 0, 0);
++  days_ago = g_date_time_difference (now_date, date) / G_TIME_SPAN_DAY;
+ 
+-  g_date_set_time_t (&mtime, time_mtime);
+-  time_now = time (NULL);
+-  g_date_set_time_t (&now, time_now);
+-
+-  days_diff = g_date_get_julian (&now) - g_date_get_julian (&mtime);
+-
+-  /* Translators: %H means "hours" and %M means "minutes" */
+-  if (days_diff == 0)
+-    format = _("%H:%M");
+-  else if (days_diff == 1)
+-    format = _("Yesterday at %H:%M");
+-  else
++  /* Translators: see g_date_time_format() for details on the format */
++  if (days_ago < 1)
+     {
+-      if (days_diff > 1 && days_diff < 7)
+-        format = "%A"; /* Days from last week */
+-      else
+-        format = "%x"; /* Any other date */
++      format = _("%H:%M");
+     }
+-
+-#ifdef G_OS_WIN32
+-  /* g_locale_from_utf8() returns a string in the system
+-   * code-page, which is not always the same as that used by the C
+-   * library. For instance when running a GTK+ program with
+-   * LANG=ko on an English version of Windows, the system
+-   * code-page is 1252, but the code-page used by the C library is
+-   * 949. (It's GTK+ itself that sets the C library locale when it
+-   * notices the LANG environment variable. See gtkmain.c The
+-   * Microsoft C library doesn't look at any locale environment
+-   * variables.) We need to pass strftime() a string in the C
+-   * library's code-page. See bug #509885.
+-   */
+-  locale = setlocale (LC_ALL, NULL);
+-  if (locale != NULL)
+-    dot = strchr (locale, '.');
+-  if (dot != NULL)
++  else if (days_ago < 2)
+     {
+-      codepage = g_ascii_strtoll (dot+1, NULL, 10);
+-      
+-      /* All codepages should fit in 16 bits AFAIK */
+-      if (codepage > 0 && codepage < 65536)
+-        {
+-          sprintf (charset, "CP%u", (guint) codepage);
+-          locale_format = g_convert (format, -1, charset, "UTF-8", NULL, NULL, NULL);
+-        }
++      format = _("Yesterday at %H:%M");
+     }
+-#else
+-  locale_format = g_locale_from_utf8 (format, -1, NULL, NULL, NULL);
+-#endif
+-  if (locale_format != NULL &&
+-      strftime (buf, sizeof (buf), locale_format, &tm_mtime) != 0)
++  else if (days_ago < 7)
+     {
+-#ifdef G_OS_WIN32
+-      /* As above but in opposite direction... */
+-      if (codepage > 0 && codepage < 65536)
+-        date_str = g_convert (buf, -1, "UTF-8", charset, NULL, NULL, NULL);
+-#else
+-      date_str = g_locale_to_utf8 (buf, -1, NULL, NULL, NULL);
+-#endif
++      format = "%A"; /* Days from last week */
+     }
++  else if (g_date_time_get_year (now) == g_date_time_get_year (time))
++    {
++      /* xgettext:no-c-format */
++      format = _("%-e %b");
++    }
++  else
++    {
++      /* xgettext:no-c-format */
++      format = _("%-e %b %Y");
++    }
++
++  date_str = g_date_time_format (time, format);
++
++  g_date_time_unref (now);
++  g_date_time_unref (now_date);
++  g_date_time_unref (time);
++  g_date_time_unref (date);
+ 
+   if (date_str == NULL)
+     date_str = g_strdup (_("Unknown"));
+ 
+-  g_free (locale_format);
+   return date_str;
+ }
+ 
+diff --git a/po/ca.po b/po/ca.po
+index 14ab34843..557299608 100644
+--- a/po/ca.po
++++ b/po/ca.po
+@@ -1952,6 +1952,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Ahir a les %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e %b"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%-e %b de %Y"
++
+ #: gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "No es pot canviar a la carpeta perquè no és local"
+diff --git a/po/cs.po b/po/cs.po
+index f7ab5ffe7..dc598a900 100644
+--- a/po/cs.po
++++ b/po/cs.po
+@@ -1022,6 +1022,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Včera v %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e. %b"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%-e. %B %Y"
++
+ #: ../gtk/gtkfilechooserdefault.c:7219
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Nelze přejít do složky, protože není místní"
+diff --git a/po/da.po b/po/da.po
+index b23269536..f8bbfae00 100644
+--- a/po/da.po
++++ b/po/da.po
+@@ -1039,6 +1039,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "I går klokken %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e. %b"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%-e. %b %Y"
++
+ #: ../gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Kan ikke skifte til mappen fordi den ikke er lokal"
+diff --git a/po/de.po b/po/de.po
+index 49e158bfb..b8d8d7c48 100644
+--- a/po/de.po
++++ b/po/de.po
+@@ -1043,6 +1043,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Gestern um %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e. %b"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%-e. %b %Y"
++
+ #: ../gtk/gtkfilechooserdefault.c:7249
+ msgid "Cannot change to folder because it is not local"
+ msgstr ""
+diff --git a/po/eo.po b/po/eo.po
+index dada2fd5e..e29baa515 100644
+--- a/po/eo.po
++++ b/po/eo.po
+@@ -1960,6 +1960,15 @@ msgstr ""
+ msgid "Yesterday at %H:%M"
+ msgstr "Hieraŭ"
+ 
++#: gtk/gtkfilechooserwidget.c:3808
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e-a de %b"
++
++#: gtk/gtkfilechooserwidget.c:3812
++msgid "%-e %b %Y"
++msgstr "%-e-a de %b %Y"
++
+ #: gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Ne eblis ŝanĝi al dosiero ĉar ĝi ne estas loka"
+diff --git a/po/eu.po b/po/eu.po
+index 746623266..d6d74425b 100644
+--- a/po/eu.po
++++ b/po/eu.po
+@@ -669,6 +669,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Atzo %H:%M orduan"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e %b"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%Y-%b-%-e"
++
+ #: ../gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Ezin aldatu karpetara, lokala ez delako."
+diff --git a/po/fa.po b/po/fa.po
+index cebdb0386..c8e26ecb4 100644
+--- a/po/fa.po
++++ b/po/fa.po
+@@ -1981,6 +1981,15 @@ msgstr ""
+ msgid "Yesterday at %H:%M"
+ msgstr "دیروز"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%O-e %b"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%O-e %b %OY"
++
+ #: gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "نمی‌توان به پوشه رفت چون محلی نیست"
+diff --git a/po/fi.po b/po/fi.po
+index 8398c7b96..36a6b6cfe 100644
+--- a/po/fi.po
++++ b/po/fi.po
+@@ -1919,6 +1919,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Eilen %H.%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e. %b"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%-e. %b %Y"
++
+ #: gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Kansioon ei voi siirtyä, koska se ei ole paikallinen"
+diff --git a/po/gl.po b/po/gl.po
+index 95a4fbd05..11a9ed97e 100644
+--- a/po/gl.po
++++ b/po/gl.po
+@@ -1027,6 +1027,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Onte ás %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e %b"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%-e %b de %Y"
++
+ #: ../gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Non é posíbel cambiar ao cartafol porque non é local"
+diff --git a/po/he.po b/po/he.po
+index a39da3d85..b03f2371c 100644
+--- a/po/he.po
++++ b/po/he.po
+@@ -1024,6 +1024,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "אתמול ב־%H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3772
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e ב%b"
++
++#: gtk/gtkfilechooserwidget.c:3776
++msgid "%-e %b %Y"
++msgstr "%-e ב%b %Y"
++
+ #: ../gtk/gtkfilechooserdefault.c:7249
+ msgid "Cannot change to folder because it is not local"
+ msgstr "לא ניתן לשנות תיקייה כיוון שהיא איננה מקומית"
+diff --git a/po/hu.po b/po/hu.po
+index 25b7879d8..6ede3b405 100644
+--- a/po/hu.po
++++ b/po/hu.po
+@@ -1036,6 +1036,15 @@ msgstr "%H.%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Tegnap %H.%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%b. %-e."
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%Y. %b. %-e."
++
+ #: ../gtk/gtkfilechooserdefault.c:7249
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Nem lehet megváltoztatni a mappát, mert az nem helyi"
+diff --git a/po/is.po b/po/is.po
+index a96baac68..ad83ed5b8 100644
+--- a/po/is.po
++++ b/po/is.po
+@@ -2007,6 +2007,15 @@ msgstr ""
+ msgid "Yesterday at %H:%M"
+ msgstr "Í gær"
+ 
++#: gtk/gtkfilechooserwidget.c:3799
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e. %b"
++
++#: gtk/gtkfilechooserwidget.c:3803
++msgid "%-e %b %Y"
++msgstr "%-e. %b %Y"
++
+ #: gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr ""
+diff --git a/po/ja.po b/po/ja.po
+index a0e2797d7..266c1b825 100644
+--- a/po/ja.po
++++ b/po/ja.po
+@@ -1035,6 +1035,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "昨日の %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-m月%-d日"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%Y年%-m月%-d日"
++
+ #: ../gtk/gtkfilechooserdefault.c:7261
+ msgid "Cannot change to folder because it is not local"
+ msgstr "ローカルではないので、フォルダを変更できません"
+diff --git a/po/ko.po b/po/ko.po
+index 64fe8bc49..7bc0300a5 100644
+--- a/po/ko.po
++++ b/po/ko.po
+@@ -1031,6 +1031,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "어제 %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%b %-e일"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%Y년 %b %-e일"
++
+ #: ../gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "로컬 폴더가 아니므로 폴더로 이동할 수 없습니다"
+diff --git a/po/lt.po b/po/lt.po
+index dd732ef67..4af9647ad 100644
+--- a/po/lt.po
++++ b/po/lt.po
+@@ -1921,6 +1921,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Vakar %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%b %-e"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%Y-%b-%-e"
++
+ #: gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Negalima pakeisti į nurodytą aplanką, nes jis nėra vietinis"
+diff --git a/po/lv.po b/po/lv.po
+index 6df51f848..30a143ab6 100644
+--- a/po/lv.po
++++ b/po/lv.po
+@@ -1909,6 +1909,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Vakar %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3799
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e. %b"
++
++#: gtk/gtkfilechooserwidget.c:3803
++msgid "%-e %b %Y"
++msgstr "%Y. gada %-e. %b"
++
+ #: gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Nevar pārslēgties uz mapi, jo tā nav lokāla "
+diff --git a/po/nb.po b/po/nb.po
+index 4fda6ad23..a08bc2b17 100644
+--- a/po/nb.po
++++ b/po/nb.po
+@@ -1023,6 +1023,15 @@ msgstr "%H.%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "I går kl. %H.%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%b %-e"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%b %-e %Y"
++
+ #: ../gtk/gtkfilechooserdefault.c:7296
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Kan ikke gå til mappen fordi den ikke er lokal."
+diff --git a/po/pl.po b/po/pl.po
+index 4820e0319..5fe02f684 100644
+--- a/po/pl.po
++++ b/po/pl.po
+@@ -1034,6 +1034,15 @@ msgstr "%H∶%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Wczoraj o %H∶%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-d %b"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%-d %b %Y"
++
+ #: ../gtk/gtkfilechooserdefault.c:7289
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Nie można przejść do katalogu, ponieważ nie jest on lokalny"
+diff --git a/po/pt_BR.po b/po/pt_BR.po
+index 965dbb3ce..234c09861 100644
+--- a/po/pt_BR.po
++++ b/po/pt_BR.po
+@@ -1029,6 +1029,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Ontem às %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e de %b"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%-e de %b de %Y"
++
+ #: ../gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Não foi possível ir para a pasta porque ela não é local"
+diff --git a/po/sk.po b/po/sk.po
+index 52e9a7b7b..d4fbebb88 100644
+--- a/po/sk.po
++++ b/po/sk.po
+@@ -1918,6 +1918,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Včera o %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e. %b"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%-e. %b %Y"
++
+ #: gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Nepodarilo sa zmeniť priečinok, pretože nie je lokálny"
+diff --git a/po/sr.po b/po/sr.po
+index 9c010f33f..488c9d1ea 100644
+--- a/po/sr.po
++++ b/po/sr.po
+@@ -1943,6 +1943,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Јуче у %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e %b"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%-e. %b %Y."
++
+ #: gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Не могу да уђем у фасциклу зато што није локална"
+diff --git a/po/sr@latin.po b/po/sr@latin.po
+index 6230b7f60..4c48497dc 100644
+--- a/po/sr@latin.po
++++ b/po/sr@latin.po
+@@ -1946,6 +1946,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "Juče u %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3799
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e %b"
++
++#: gtk/gtkfilechooserwidget.c:3803
++msgid "%-e %b %Y"
++msgstr "%-e. %b %Y."
++
+ #: gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "Ne mogu da uđem u fasciklu zato što nije lokalna"
+diff --git a/po/th.po b/po/th.po
+index 7dbbf2716..607a338de 100644
+--- a/po/th.po
++++ b/po/th.po
+@@ -1013,6 +1013,15 @@ msgstr "%H:%M น."
+ msgid "Yesterday at %H:%M"
+ msgstr "เมื่อวาน %H:%M น."
+ 
++#: gtk/gtkfilechooserwidget.c:3808
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-e %b"
++
++#: gtk/gtkfilechooserwidget.c:3812
++msgid "%-e %b %Y"
++msgstr "%-e %b %Ey"
++
+ #: ../gtk/gtkfilechooserdefault.c:7261
+ msgid "Cannot change to folder because it is not local"
+ msgstr "ไปโฟลเดอร์ที่กำหนดไม่สำเร็จ เพราะไม่ใช่โฟลเดอร์ในเครื่องนี้"
+diff --git a/po/ug.po b/po/ug.po
+index 84736323f..cf65a312a 100644
+--- a/po/ug.po
++++ b/po/ug.po
+@@ -1005,6 +1005,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "ئەتە %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3808
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-m-ئاينىڭ %-d-كۈنى"
++
++#: gtk/gtkfilechooserwidget.c:3812
++msgid "%-e %b %Y"
++msgstr "%Y-يىلى %-m-ئاينىڭ %-d-كۈنى"
++
+ #: ../gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "قىسقۇچقا ئۆزگەرتەلمەيدۇ چۈنكى ئۇ يەرلىك قىسقۇچ ئەمەس"
+diff --git a/po/zh_CN.po b/po/zh_CN.po
+index 89751ee94..5cc5a3da1 100644
+--- a/po/zh_CN.po
++++ b/po/zh_CN.po
+@@ -1024,6 +1024,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "昨天于 %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-m月%-d日"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%Y年%-m月%-d日"
++
+ #: ../gtk/gtkfilechooserdefault.c:7204
+ msgid "Cannot change to folder because it is not local"
+ msgstr "无法更改为文件夹，因为该文件夹并非本地"
+diff --git a/po/zh_TW.po b/po/zh_TW.po
+index a0dcead1e..d25097f9c 100644
+--- a/po/zh_TW.po
++++ b/po/zh_TW.po
+@@ -999,6 +999,15 @@ msgstr "%H:%M"
+ msgid "Yesterday at %H:%M"
+ msgstr "昨天的 %H:%M"
+ 
++#: gtk/gtkfilechooserwidget.c:3804
++#, no-c-format
++msgid "%-e %b"
++msgstr "%-m月%-e日"
++
++#: gtk/gtkfilechooserwidget.c:3808
++msgid "%-e %b %Y"
++msgstr "%Y年%-m月%-e日"
++
+ #: ../gtk/gtkfilechooserdefault.c:7203
+ msgid "Cannot change to folder because it is not local"
+ msgstr "無法進入資料夾，因為它不是本地資料夾"
+-- 
+2.53.0.windows.2
+

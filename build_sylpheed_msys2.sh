@@ -185,6 +185,14 @@ CFLAGS="${CFLAGS} -Wno-implicit-function-declaration" \
     --with-included-immodules=ime
 make -j$(getconf _NPROCESSORS_ONLN)
 cp -a gdk/.libs/*.dll gtk/.libs/*.dll "${DIST_PREFIX}/bin/"
+find "po" -type f -name '*.gmo' | while IFS= read -r item ; do
+    loc="${item%.*}"
+    loc="${loc##*/}"
+    mkdir -p "${DIST_PREFIX}/share/locale/${loc}/LC_MESSAGES/"
+    if [ ! -f "${DIST_PREFIX}/share/locale/${loc}/LC_MESSAGES/gtk20.mo" ] ; then
+        cp -a "${item}" "${DIST_PREFIX}/share/locale/${loc}/LC_MESSAGES/gtk20.mo"
+    fi
+done
 cd ..
 
 #curl --retry 5 --fail -LO https://gtkspell.sourceforge.io/download/gtkspell-2.0.16.tar.gz
@@ -456,7 +464,9 @@ find "${MSYSTEM_PREFIX}/share/locale/" -type f -name 'gtk20.mo' | while IFS= rea
     loc="${item%/LC_MESSAGES/*}"
     loc="${loc##*/}"
     mkdir -p "${DIST_PREFIX}/share/locale/${loc}/LC_MESSAGES/"
-    cp -a "${item}" "${DIST_PREFIX}/share/locale/${loc}/LC_MESSAGES/"
+    if [ ! -f "${DIST_PREFIX}/share/locale/${loc}/LC_MESSAGES/gtk20.mo" ] ; then
+        cp -a "${item}" "${DIST_PREFIX}/share/locale/${loc}/LC_MESSAGES/gtk20.mo"
+    fi
 done
 cd sylpheed-3.8.0beta1
 cp -a "sylpheed.png" "sylpheed-64x64.png" "sylpheed-128x128.png" "${DIST_PREFIX}/"
