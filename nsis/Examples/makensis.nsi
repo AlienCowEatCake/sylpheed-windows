@@ -47,6 +47,7 @@ RequestExecutionLevel admin
 !include "Sections.nsh"
 !include "LogicLib.nsh"
 !include "Memento.nsh"
+!include "FileFunc.nsh"
 !include "WordFunc.nsh"
 !include "Util.nsh"
 !include "Integration.nsh"
@@ -123,9 +124,24 @@ VIAddVersionKey "LegalCopyright" "http://nsis.sf.net/License"
 ;--------------------------------
 ;Installer Sections
 
+!macro OptionalFile src options eval
+  !if '${eval}' == ''
+    !define /ReDef eval 1
+  !endif
+  !if ${eval}
+    !if /FileExists "${src}"
+      File ${options} "${src}"
+    !endif
+  !endif
+!macroend
+
 !macro InstallPlugin pi
   !if ${BITS} >= 64
-    File "/oname=$InstDir\Plugins\amd64-unicode\${pi}.dll" ..\Plugins\amd64-unicode\${pi}.dll
+    File "/oname=$InstDir\Plugins\${NSIS_CPU}-unicode\${pi}.dll" ..\Plugins\${NSIS_CPU}-unicode\${pi}.dll
+    !insertmacro OptionalFile ..\Plugins\amd64-unicode\${pi}.dll "/oname=$InstDir\Plugins\amd64-unicode\${pi}.dll" 'amd64 != ${NSIS_CPU}'
+    !insertmacro OptionalFile ..\Plugins\arm64-unicode\${pi}.dll "/oname=$InstDir\Plugins\arm64-unicode\${pi}.dll" 'arm64 != ${NSIS_CPU}'
+    !insertmacro OptionalFile ..\Plugins\x86-ansi\${pi}.dll "/oname=$InstDir\Plugins\x86-ansi\${pi}.dll" ''
+    !insertmacro OptionalFile ..\Plugins\x86-unicode\${pi}.dll "/oname=$InstDir\Plugins\x86-unicode\${pi}.dll" ''
   !else
     File "/oname=$InstDir\Plugins\x86-ansi\${pi}.dll" ..\Plugins\x86-ansi\${pi}.dll
     File "/oname=$InstDir\Plugins\x86-unicode\${pi}.dll" ..\Plugins\x86-unicode\${pi}.dll
@@ -134,7 +150,9 @@ VIAddVersionKey "LegalCopyright" "http://nsis.sf.net/License"
 
 !macro InstallStub stub
   !if ${BITS} >= 64
-    File ..\Stubs\${stub}-amd64-unicode
+    File ..\Stubs\${stub}-${NSIS_CPU}-unicode
+    !insertmacro OptionalFile ..\Stubs\${stub}-amd64-unicode '' 'amd64 != ${NSIS_CPU}'
+    !insertmacro OptionalFile ..\Stubs\${stub}-arm64-unicode '' 'arm64 != ${NSIS_CPU}'
   !else
     File ..\Stubs\${stub}-x86-ansi
     File ..\Stubs\${stub}-x86-unicode
@@ -245,55 +263,26 @@ ${MementoSection} "NSIS Core Files (required)" SecCore
 
   SetOutPath $INSTDIR\Bin
   !if ${BITS} >= 64
-    File /NonFatal  ..\Bin\RegTool-x86.bin
-    File            ..\Bin\RegTool-amd64.bin
-  !else
-    File            ..\Bin\RegTool-x86.bin
-    !if /FileExists ..\Bin\RegTool-amd64.bin ; It is unlikely that this exists, avoid the /NonFatal warning.
-      File          ..\Bin\RegTool-amd64.bin
+    !insertmacro OptionalFile ..\Bin\RegTool-x86.bin '' ''
+    !ifdef NSIS_ARM64
+      File                    ..\Bin\RegTool-arm64.bin
+    !else
+      File                    ..\Bin\RegTool-amd64.bin
     !endif
+  !else
+    File                      ..\Bin\RegTool-x86.bin
+    !insertmacro OptionalFile ..\Bin\RegTool-amd64.bin '' '' ; It's unlikely that this exists, avoid the /NonFatal warning.
   !endif
 
   CreateDirectory $INSTDIR\Plugins\x86-ansi
   CreateDirectory $INSTDIR\Plugins\x86-unicode
   !if ${BITS} >= 64
     CreateDirectory $INSTDIR\Plugins\amd64-unicode
+    !ifdef NSIS_ARM64
+      CreateDirectory $INSTDIR\Plugins\arm64-unicode
+    !endif
   !endif
   !insertmacro InstallPlugin TypeLib
-
-  ReadRegStr $R0 HKCR ".nsi" ""
-  StrCmp $R0 "NSISFile" 0 +2
-    DeleteRegKey HKCR "NSISFile"
-
-  WriteRegStr HKCR ".nsi" "" "NSIS.Script"
-  WriteRegStr HKCR ".nsi" "PerceivedType" "text"
-  WriteRegStr HKCR "NSIS.Script" "" "NSIS Script File"
-  WriteRegStr HKCR "NSIS.Script\DefaultIcon" "" "$INSTDIR\makensisw.exe,1"
-  ReadRegStr $R0 HKCR "NSIS.Script\shell\open\command" ""
-  ${If} $R0 == ""
-    WriteRegStr HKCR "NSIS.Script\shell" "" "open"
-    WriteRegStr HKCR "NSIS.Script\shell\open\command" "" 'notepad.exe "%1"'
-  ${EndIf}
-  WriteRegStr HKCR "NSIS.Script\shell\compile" "" "Compile NSIS Script"
-  WriteRegStr HKCR "NSIS.Script\shell\compile\command" "" '"$INSTDIR\makensisw.exe" "%1"'
-  WriteRegStr HKCR "NSIS.Script\shell\compile-compressor" "" "Compile NSIS Script (Choose Compressor)"
-  WriteRegStr HKCR "NSIS.Script\shell\compile-compressor\command" "" '"$INSTDIR\makensisw.exe" /ChooseCompressor "%1"'
-
-  ReadRegStr $R0 HKCR ".nsh" ""
-  StrCmp $R0 "NSHFile" 0 +2
-    DeleteRegKey HKCR "NSHFile"
-
-  WriteRegStr HKCR ".nsh" "" "NSIS.Header"
-  WriteRegStr HKCR ".nsh" "PerceivedType" "text"
-  WriteRegStr HKCR "NSIS.Header" "" "NSIS Header File"
-  WriteRegStr HKCR "NSIS.Header\DefaultIcon" "" "$INSTDIR\makensisw.exe,2"
-  ReadRegStr $R0 HKCR "NSIS.Header\shell\open\command" ""
-  ${If} $R0 == ""
-    WriteRegStr HKCR "NSIS.Header\shell" "" "open"
-    WriteRegStr HKCR "NSIS.Header\shell\open\command" "" 'notepad.exe "%1"'
-  ${EndIf}
-
-  ${NotifyShell_AssocChanged}
 
 ${MementoSectionEnd}
 
@@ -779,6 +768,83 @@ ${MementoSectionDone}
 
 SectionGroupEnd
 
+Section -UninstallerAndAssoc SecUninstallerAndAssoc
+
+  SetDetailsPrint textonly
+  DetailPrint "Updating Registry..."
+  SetDetailsPrint listonly
+
+  ReadRegStr $R0 HKCR ".nsi" ""
+  StrCmp $R0 "NSISFile" 0 +2
+    DeleteRegKey HKCR "NSISFile"
+
+  WriteRegStr HKCR ".nsi" "" "NSIS.Script"
+  WriteRegStr HKCR ".nsi" "PerceivedType" "text"
+  WriteRegStr HKCR "NSIS.Script" "" "NSIS Script File"
+  WriteRegStr HKCR "NSIS.Script\DefaultIcon" "" "$INSTDIR\makensisw.exe,1"
+  ReadRegStr $R0 HKCR "NSIS.Script\shell\open\command" ""
+  ${If} $R0 == ""
+    WriteRegStr HKCR "NSIS.Script\shell" "" "open"
+    WriteRegStr HKCR "NSIS.Script\shell\open\command" "" 'notepad.exe "%1"'
+  ${EndIf}
+  WriteRegStr HKCR "NSIS.Script\shell\compile" "" "Compile NSIS Script"
+  WriteRegStr HKCR "NSIS.Script\shell\compile\command" "" '"$INSTDIR\makensisw.exe" "%1"'
+  WriteRegStr HKCR "NSIS.Script\shell\compile-compressor" "" "Compile NSIS Script (Choose Compressor)"
+  WriteRegStr HKCR "NSIS.Script\shell\compile-compressor\command" "" '"$INSTDIR\makensisw.exe" /ChooseCompressor "%1"'
+
+  ReadRegStr $R0 HKCR ".nsh" ""
+  StrCmp $R0 "NSHFile" 0 +2
+    DeleteRegKey HKCR "NSHFile"
+
+  WriteRegStr HKCR ".nsh" "" "NSIS.Header"
+  WriteRegStr HKCR ".nsh" "PerceivedType" "text"
+  WriteRegStr HKCR "NSIS.Header" "" "NSIS Header File"
+  WriteRegStr HKCR "NSIS.Header\DefaultIcon" "" "$INSTDIR\makensisw.exe,2"
+  ReadRegStr $R0 HKCR "NSIS.Header\shell\open\command" ""
+  ${If} $R0 == ""
+    WriteRegStr HKCR "NSIS.Header\shell" "" "open"
+    WriteRegStr HKCR "NSIS.Header\shell\open\command" "" 'notepad.exe "%1"'
+  ${EndIf}
+
+  ${NotifyShell_AssocChanged}
+
+  WriteRegStr HKLM "Software\NSIS" "" $INSTDIR
+!ifdef VER_MAJOR & VER_MINOR & VER_REVISION & VER_BUILD
+  WriteRegDword HKLM "Software\NSIS" "VersionMajor" "${VER_MAJOR}"
+  WriteRegDword HKLM "Software\NSIS" "VersionMinor" "${VER_MINOR}"
+  WriteRegDword HKLM "Software\NSIS" "VersionRevision" "${VER_REVISION}"
+  WriteRegDword HKLM "Software\NSIS" "VersionBuild" "${VER_BUILD}"
+!endif
+
+  SetDetailsPrint textonly
+  DetailPrint "Creating Uninstaller..."
+  SetDetailsPrint listonly
+
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "UninstallString" '"$INSTDIR\uninst-nsis.exe"'
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "QuietUninstallString" '"$INSTDIR\uninst-nsis.exe" /S'
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "InstallLocation" "$INSTDIR"
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayName" "Nullsoft Install System${NAMESUFFIX}"
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayIcon" "$INSTDIR\NSIS.exe"
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayVersion" "${VERSION}"
+!ifdef VER_MAJOR & VER_MINOR & VER_REVISION & VER_BUILD
+  WriteRegDWORD HKLM "${REG_UNINST_KEY}" "VersionMajor" "${VER_MAJOR}" ; Required by WACK
+  WriteRegDWORD HKLM "${REG_UNINST_KEY}" "VersionMinor" "${VER_MINOR}" ; Required by WACK
+!endif
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "Publisher" "Nullsoft and Contributors" ; Required by WACK
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "URLInfoAbout" "https://nsis.sourceforge.io/"
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "HelpLink" "https://nsis.sourceforge.io/Support"
+  WriteRegDWORD HKLM "${REG_UNINST_KEY}" "NoModify" "1"
+  WriteRegDWORD HKLM "${REG_UNINST_KEY}" "NoRepair" "1"
+  ${MakeARPInstallDate} $1
+  WriteRegStr HKLM "${REG_UNINST_KEY}" "InstallDate" $1
+
+  SetOutPath $INSTDIR
+  WriteUninstaller $INSTDIR\uninst-nsis.exe
+
+  ${MementoSectionSave}
+
+SectionEnd
+
 Section -post
 
   ; When Modern UI is installed:
@@ -810,42 +876,6 @@ Section -post
     ${EndIf}
 
   ${EndIf}
-
-  SetDetailsPrint textonly
-  DetailPrint "Creating Registry Keys..."
-  SetDetailsPrint listonly
-
-  SetOutPath $INSTDIR
-
-  WriteRegStr HKLM "Software\NSIS" "" $INSTDIR
-!ifdef VER_MAJOR & VER_MINOR & VER_REVISION & VER_BUILD
-  WriteRegDword HKLM "Software\NSIS" "VersionMajor" "${VER_MAJOR}"
-  WriteRegDword HKLM "Software\NSIS" "VersionMinor" "${VER_MINOR}"
-  WriteRegDword HKLM "Software\NSIS" "VersionRevision" "${VER_REVISION}"
-  WriteRegDword HKLM "Software\NSIS" "VersionBuild" "${VER_BUILD}"
-!endif
-
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "UninstallString" '"$INSTDIR\uninst-nsis.exe"'
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "QuietUninstallString" '"$INSTDIR\uninst-nsis.exe" /S'
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "InstallLocation" "$INSTDIR"
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayName" "Nullsoft Install System${NAMESUFFIX}"
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayIcon" "$INSTDIR\NSIS.exe"
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "DisplayVersion" "${VERSION}"
-!ifdef VER_MAJOR & VER_MINOR & VER_REVISION & VER_BUILD
-  WriteRegDWORD HKLM "${REG_UNINST_KEY}" "VersionMajor" "${VER_MAJOR}" ; Required by WACK
-  WriteRegDWORD HKLM "${REG_UNINST_KEY}" "VersionMinor" "${VER_MINOR}" ; Required by WACK
-!endif
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "Publisher" "Nullsoft and Contributors" ; Required by WACK
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "URLInfoAbout" "https://nsis.sourceforge.io/"
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "HelpLink" "https://nsis.sourceforge.io/Support"
-  WriteRegDWORD HKLM "${REG_UNINST_KEY}" "NoModify" "1"
-  WriteRegDWORD HKLM "${REG_UNINST_KEY}" "NoRepair" "1"
-  ${MakeARPInstallDate} $1
-  WriteRegStr HKLM "${REG_UNINST_KEY}" "InstallDate" $1
-
-  WriteUninstaller $INSTDIR\uninst-nsis.exe
-
-  ${MementoSectionSave}
 
   SetDetailsPrint both
 
@@ -889,7 +919,19 @@ SectionEnd
 
 Function .onInit
 
-  ${MementoSectionRestore}
+  ${GetParameters} $9
+
+  ; Portable install mode
+  ; WinGet: winget install --force -h -s winget -e NSIS --custom /P -l c:\NSIS
+  ; Manual: cmd /C for %A in (1,2) do @if %A==1 (set __COMPAT_LAYER=RunAsInvoker) else nsis-setup.exe /P /S /D=c:\NSIS
+  ClearErrors
+  ${GetOptions} $9 "/P" $1 
+  ${IfNot} ${Errors}
+    SectionSetFlags ${SecUninstallerAndAssoc} 0 ; Don't write to the registry
+    SectionSetFlags ${SecShortcuts} 0
+  ${Else}
+    ${MementoSectionRestore}
+  ${EndIf}
 
 FunctionEnd
 
@@ -1034,7 +1076,7 @@ FunctionEnd
 Section Uninstall
 
   SetDetailsPrint textonly
-  DetailPrint "Uninstalling NSI Development Shell Extensions..."
+  DetailPrint "Initializing..."
   SetDetailsPrint listonly
 
   IfFileExists $INSTDIR\Bin\makensis.exe nsis_installed
@@ -1061,6 +1103,8 @@ Section Uninstall
 
   DeleteRegKey HKLM "${REG_UNINST_KEY}"
   DeleteRegKey HKLM "Software\NSIS"
+  DeleteRegKey HKCU "Software\NSIS\MRU"
+  DeleteRegKey /IfNoSubkeys HKCU "Software\NSIS"
 
   SetDetailsPrint textonly
   DetailPrint "Deleting Files..."
