@@ -102,7 +102,7 @@ includedir=\${prefix}/include
 
 Name: libenchant
 Description: A spell checking library
-Version: 2.8.16
+Version: 2.8.21
 Libs: -L\${libdir} -lenchant-2
 Cflags: -I\${includedir}/enchant-2
 EOF
@@ -119,7 +119,7 @@ make -j$(getconf _NPROCESSORS_ONLN)
 make install
 cd ..
 
-#curl --retry 5 --fail -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.6-1/wintoastlibc_${VCVARS_ARCH##*_}.zip"
+#curl --retry 5 --fail -LO "https://github.com/AlienCowEatCake/WinToastLibC/releases/download/v0.7/wintoastlibc_${VCVARS_ARCH##*_}.zip"
 cp -a "${SOURCE_DIR}/sources/wintoastlibc_${VCVARS_ARCH##*_}.zip" ./
 unzip "wintoastlibc_${VCVARS_ARCH##*_}.zip"
 cd "$(echo "wintoastlibc_${VCVARS_ARCH##*_}.zip" | sed 's|\.zip$||')"
@@ -136,10 +136,10 @@ rm -f "test_applink.c" "test_applink.exe"
 echo -e "\nUSE_OPENSSL_APPLINK=${USE_OPENSSL_APPLINK}\n"
 
 # @note https://github.com/AlienCowEatCake/sylpheed-windows/issues/4
-#curl --retry 5 --fail -LO https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-2.1.0.tar.bz2
-cp -a "${SOURCE_DIR}/sources/gpgme-2.1.0.tar.bz2" ./
-tar -xvpf gpgme-2.1.0.tar.bz2
-cd gpgme-2.1.0
+#curl --retry 5 --fail -LO https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-2.2.0.tar.bz2
+cp -a "${SOURCE_DIR}/sources/gpgme-2.2.0.tar.bz2" ./
+tar -xvpf gpgme-2.2.0.tar.bz2
+cd gpgme-2.2.0
 autoreconf -ivf
 DOXYGEN=false \
 PYTHON=${MINGW_PREFIX}/bin/python3 \
