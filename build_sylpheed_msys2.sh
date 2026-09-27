@@ -48,7 +48,6 @@ pacman -S --needed --noconfirm \
     ${MSYSTEM_PKG_PREFIX}-curl \
     ${MSYSTEM_PKG_PREFIX}-openssl \
     ${MSYSTEM_PKG_PREFIX}-enchant \
-    ${MSYSTEM_PKG_PREFIX}-oniguruma \
     ${MSYSTEM_PKG_PREFIX}-libiconv \
     ${MSYSTEM_PKG_PREFIX}-ca-certificates \
     ${MSYSTEM_PKG_PREFIX}-gpgme \
@@ -218,6 +217,24 @@ if [ -f "${DIST_PREFIX}/lib/libgtkspell.a" ] ; then
 fi
 cd ..
 
+#curl --retry 5 --fail -LO https://github.com/kkos/oniguruma/releases/download/v6.9.10/onig-6.9.10.tar.gz
+cp -a "${SOURCE_DIR}/sources/onig-6.9.10.tar.gz" ./
+tar -xvpf onig-6.9.10.tar.gz
+cd onig-6.9.10
+find "${SOURCE_DIR}/patches/oniguruma" \( -name '*.patch' -o -name '*.diff' \) | sort | while IFS= read -r item ; do patch -p1 --binary -i "${item}" ; done
+./configure \
+    --prefix="${DIST_PREFIX}" \
+    --build=${MINGW_CHOST} \
+    --host=${MINGW_CHOST} \
+    --target=${MINGW_CHOST} \
+    --disable-dependency-tracking \
+    --enable-shared \
+    --disable-static \
+    --enable-posix-api
+make -j$(getconf _NPROCESSORS_ONLN)
+make install
+cd ..
+
 #curl --retry 5 --fail -LO https://sylpheed.sraoss.jp/sylpheed/v3.8beta/sylpheed-3.8.0beta1.tar.xz
 cp -a "${SOURCE_DIR}/sources/sylpheed-3.8.0beta1.tar.xz" ./
 tar -xvpf sylpheed-3.8.0beta1.tar.xz
@@ -314,7 +331,7 @@ cp -a bsfilter/bsfilter bsfilter/bsfilterw.exe "${DIST_PREFIX}/bin/"
 cp -a htdocs "${DIST_PREFIX}/share/sylpheed/bsfilter"
 cd ..
 
-rm -rf "${DIST_PREFIX}/bin/compface.exe" "${DIST_PREFIX}/bin/uncompface.exe" \
+rm -rf "${DIST_PREFIX}/bin/compface.exe" "${DIST_PREFIX}/bin/uncompface.exe" "${DIST_PREFIX}/bin/onig-config" \
     "${DIST_PREFIX}/bin/gpgme-config" "${DIST_PREFIX}/bin/gpgme-json.exe" "${DIST_PREFIX}/bin/gpgme-tool.exe"
 mv "${DIST_PREFIX}/bin/"* "${DIST_PREFIX}/"
 cp -a "${DIST_PREFIX}/sylfilter.exe" "${DIST_PREFIX}/sylfilter-cui.exe"
