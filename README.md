@@ -18,7 +18,7 @@ Prerequisites:
 - [MSYS2](https://www.msys2.org/)
 - [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) for CRT and UCRT redistributables
 
-You need to open MSYS2 terminal for `UCRT64`, `MINGW64`, `CLANG64` or `CLANGARM64` environment and run following command:
+You need to open MSYS2 terminal for `UCRT64`, `CLANG64` or `CLANGARM64` environment and run following command:
 ```sh
 cd sylpheed-windows
 ./build_sylpheed_msys2.sh

@@ -12,11 +12,6 @@ if [ "${MSYSTEM}" == "UCRT64" ] ; then
     VCVARS_ARCH="x64"
     CRT_ARCH="x64"
     NSIS_ARCH="x64"
-elif [ "${MSYSTEM}" == "MINGW64" ] ; then
-    MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-x86_64"
-    VCVARS_ARCH="x64"
-    CRT_ARCH="x64"
-    NSIS_ARCH="x64"
 elif [ "${MSYSTEM}" == "CLANG64" ] ; then
     MSYSTEM_PKG_PREFIX="${MSYSTEM_PKG_PREFIX}-clang-x86_64"
     VCVARS_ARCH="x64"
@@ -41,7 +36,9 @@ pacman -S --needed --noconfirm \
     zip \
     unzip \
     intltool \
+    dos2unix \
     ${MSYSTEM_PKG_PREFIX}-toolchain \
+    ${MSYSTEM_PKG_PREFIX}-tools \
     ${MSYSTEM_PKG_PREFIX}-autotools \
     ${MSYSTEM_PKG_PREFIX}-gobject-introspection \
     ${MSYSTEM_PKG_PREFIX}-gtk2 \
@@ -353,7 +350,11 @@ echo 'gtk-theme-name = "MS-Windows"' > "${DIST_PREFIX}/etc/gtk-2.0/gtkrc"
 
 cp -a "${MSYSTEM_PREFIX}/lib/gdk-pixbuf-2.0" "${DIST_PREFIX}/lib/"
 cp -a "${MSYSTEM_PREFIX}/lib/gtk-2.0" "${DIST_PREFIX}/lib/"
-cp -a "${MSYSTEM_PREFIX}/lib/engines-3" "${DIST_PREFIX}/lib/"
+if pkg-config --atleast-version 4.0.0 openssl ; then
+    cp -a "${MSYSTEM_PREFIX}/lib/ossl-modules" "${DIST_PREFIX}/lib/"
+else
+    cp -a "${MSYSTEM_PREFIX}/lib/engines-3" "${DIST_PREFIX}/lib/"
+fi
 find "${DIST_PREFIX}" \( -name '*.a' -o -name '*.la' \) -delete
 find "${DIST_PREFIX}" -name 'include' | sort | while IFS= read -r item ; do rm -rf "${item}" ; done
 
@@ -378,7 +379,7 @@ function getDeps() {
 }
 
 function checkDll() {
-    find "${DIST_PREFIX}" -name "${1}" | grep -E '*' >/dev/null 2>/dev/null
+    find "${DIST_PREFIX}" -name "${1}" | grep -E '.' >/dev/null 2>/dev/null
 }
 
 function copyDlls() {
@@ -393,7 +394,7 @@ function copyDlls() {
             fi
             for j in "${@}" ; do
                 if [ ! -z "${j}" -a -d "${j}" ] ; then
-                    if find "${j}" -maxdepth 1 -name "${i}" -print -exec cp -a \{\} "${DIST_PREFIX}/" \; | grep -E '*' ; then
+                    if find "${j}" -maxdepth 1 -name "${i}" -print -exec cp -a \{\} "${DIST_PREFIX}/" \; | grep -E '.' ; then
                         CHANGED=true
                         RESOLVED=true
                         break
@@ -469,7 +470,13 @@ copyDlls "${MSYSTEM_PREFIX}/bin"
 fixupExes
 fixupCurlCertsPaths
 stripAll
-copyDlls "$(cygpath -u "$(getCRTPath)")" "$(cygpath -u "$(getUCRTPath)")"
+CRT_ROOT="$(getCRTPath)"
+# @todo HACK: avoid Bad address error after native cmd calling
+echo
+UCRT_ROOT="$(getUCRTPath)"
+# @todo HACK: avoid Bad address error after native cmd calling
+echo
+copyDlls "$(cygpath -u "${CRT_ROOT}")" "$(cygpath -u "${UCRT_ROOT}")"
 
 cp -a "${SOURCE_DIR}/misc/mime.types" "${DIST_PREFIX}/etc/"
 cp -a "${SOURCE_DIR}/misc/README-win32-es.txt" "${DIST_PREFIX}/"
